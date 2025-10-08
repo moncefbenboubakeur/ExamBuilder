@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { Question } from '@/lib/supabaseClient';
@@ -11,7 +11,7 @@ import ExamTimer from '@/components/ExamTimer';
 import { isAnswerCorrect } from '@/lib/examLogic';
 import { X } from 'lucide-react';
 
-export default function ExamPage() {
+function ExamContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const retryIds = searchParams.get('retry');
@@ -254,7 +254,7 @@ export default function ExamPage() {
   const canFinish = totalAnswered === questions.length;
 
   return (
-    <div className="bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4 min-h-[calc(100vh-4rem)]">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Top bar with Exit button and Timer */}
         <div className="flex justify-between items-center mb-4">
@@ -322,5 +322,20 @@ export default function ExamPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ExamPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading exam...</p>
+        </div>
+      </div>
+    }>
+      <ExamContent />
+    </Suspense>
   );
 }
