@@ -16,6 +16,11 @@ export default function LoginPage() {
     setLoading(true);
     setMessage(null);
 
+    console.log('🔐 Magic Link Login Attempt');
+    console.log('📧 Email:', email);
+    console.log('🌐 Origin:', window.location.origin);
+    console.log('🔗 Redirect URL:', `${window.location.origin}/auth/callback`);
+
     try {
       const { error } = await supabase.auth.signInWithOtp({
         email,
@@ -24,8 +29,15 @@ export default function LoginPage() {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Magic Link Error:', error);
+        console.error('  Error name:', error.name);
+        console.error('  Error message:', error.message);
+        console.error('  Error status:', (error as any).status);
+        throw error;
+      }
 
+      console.log('✅ Magic link sent successfully');
       setMessage({
         type: 'success',
         text: 'Check your email for the magic link to sign in!',
@@ -33,6 +45,7 @@ export default function LoginPage() {
       setEmail('');
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to send magic link';
+      console.error('💥 Magic Link Exception:', error);
       setMessage({
         type: 'error',
         text: errorMessage,
@@ -47,13 +60,30 @@ export default function LoginPage() {
     setLoading(true);
     setMessage(null);
 
+    console.log('🔐 Password Login Attempt');
+    console.log('📧 Email:', email);
+    console.log('🔑 Password length:', password.length);
+    console.log('🌍 Environment Variables:');
+    console.log('  SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
+    console.log('  SUPABASE_KEY exists:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Password Login Error:', error);
+        console.error('  Error name:', error.name);
+        console.error('  Error message:', error.message);
+        console.error('  Error status:', (error as any).status);
+        throw error;
+      }
+
+      console.log('✅ Login successful!');
+      console.log('👤 User:', data.user?.email);
+      console.log('🎫 Session exists:', !!data.session);
 
       if (data.session) {
         setMessage({
@@ -67,6 +97,7 @@ export default function LoginPage() {
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to sign in';
+      console.error('💥 Password Login Exception:', error);
       setMessage({
         type: 'error',
         text: errorMessage,
