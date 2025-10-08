@@ -129,14 +129,14 @@ export async function parseMarkdownWithRemark(
   const questions: ParsedQuestion[] = [];
 
   // Find table nodes
-  const visit = (node: any) => {
+  const visit = (node: Record<string, unknown>) => {
     if (node.type === 'table') {
       const rows = node.children.slice(1); // Skip header row
 
       for (const row of rows) {
         if (row.type === 'tableRow' && row.children.length >= 6) {
           try {
-            const cells = row.children.map((cell: any) =>
+            const cells = row.children.map((cell: Record<string, unknown>) =>
               extractTextFromNode(cell)
             );
 
@@ -178,7 +178,7 @@ export async function parseMarkdownWithRemark(
 /**
  * Extract text content from a remark node
  */
-function extractTextFromNode(node: any): string {
+function extractTextFromNode(node: Record<string, unknown>): string {
   if (node.type === 'text') {
     return node.value;
   }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import ResultScreen from '@/components/ResultScreen';
@@ -10,7 +10,13 @@ export default function ResultsPage() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('sessionId');
 
-  const [results, setResults] = useState<any>(null);
+  const [results, setResults] = useState<{
+    totalQuestions: number;
+    correctCount: number;
+    wrongCount: number;
+    score: number;
+    wrongQuestionIds: string[];
+  } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,9 +36,9 @@ export default function ResultsPage() {
     };
 
     checkAuth();
-  }, [router, sessionId]);
+  }, [router, sessionId, fetchResults]);
 
-  const fetchResults = async () => {
+  const fetchResults = useCallback(async () => {
     if (!sessionId) return;
 
     try {
@@ -70,7 +76,7 @@ export default function ResultsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router, sessionId]);
 
   const handleRetryAll = () => {
     router.push('/exam');

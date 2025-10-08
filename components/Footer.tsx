@@ -48,9 +48,9 @@ export default function Footer() {
             </h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="/" className="text-gray-600 hover:text-blue-600 transition-colors">
+                <button onClick={() => window.location.href = '/'} className="text-gray-600 hover:text-blue-600 transition-colors">
                   Home
-                </a>
+                </button>
               </li>
               <li>
                 <a href="/dashboard" className="text-gray-600 hover:text-blue-600 transition-colors">

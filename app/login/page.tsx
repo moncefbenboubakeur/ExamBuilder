@@ -1,12 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { Mail, CheckCircle, AlertCircle, Key } from 'lucide-react';
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [usePassword, setUsePassword] = useState(false);
@@ -33,10 +31,11 @@ export default function LoginPage() {
         text: 'Check your email for the magic link to sign in!',
       });
       setEmail('');
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to send magic link';
       setMessage({
         type: 'error',
-        text: error.message || 'Failed to send magic link',
+        text: errorMessage,
       });
     } finally {
       setLoading(false);
@@ -66,10 +65,11 @@ export default function LoginPage() {
           window.location.href = '/';
         }, 500);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to sign in';
       setMessage({
         type: 'error',
-        text: error.message || 'Failed to sign in',
+        text: errorMessage,
       });
       setLoading(false);
     }

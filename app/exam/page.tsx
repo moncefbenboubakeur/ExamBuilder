@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { Question } from '@/lib/supabaseClient';
@@ -23,7 +23,7 @@ export default function ExamPage() {
   const [multiAnswers, setMultiAnswers] = useState<Map<string, string[]>>(new Map());
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
   const [transitioning, setTransitioning] = useState(false);
   const [showExitDialog, setShowExitDialog] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -46,9 +46,9 @@ export default function ExamPage() {
     };
 
     checkAuth();
-  }, [router, initialized]);
+  }, [router, initialized, initializeExam]);
 
-  const initializeExam = async (userId: string) => {
+  const initializeExam = useCallback(async (userId: string) => {
     try {
       // Fetch questions
       let url = '/api/questions';
@@ -93,7 +93,7 @@ export default function ExamPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [examId, retryIds, router]);
 
   const isMultipleChoice = (question: Question) => {
     return question.correct_answer.includes(',');

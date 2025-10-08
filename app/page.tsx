@@ -1,16 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import FileUpload from '@/components/FileUpload';
-import { BookOpen, Play, History, FileText, Star, Calendar, Hash } from 'lucide-react';
+import { BookOpen, Play, History, FileText, Star, Hash } from 'lucide-react';
 import { supabase, Exam } from '@/lib/supabaseClient';
 
 export default function Home() {
   const router = useRouter();
   const [exams, setExams] = useState<Exam[]>([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
@@ -31,9 +31,9 @@ export default function Home() {
     if (user && authChecked) {
       fetchExams();
     }
-  }, [user, authChecked]);
+  }, [user, authChecked, fetchExams]);
 
-  const fetchExams = async () => {
+  const fetchExams = useCallback(async () => {
     try {
       const response = await fetch('/api/exams');
       if (!response.ok) {
@@ -53,7 +53,7 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
 
   const handleUploadSuccess = () => {
     fetchExams();
@@ -189,7 +189,7 @@ export default function Home() {
           </div>
           <ol className="list-decimal list-inside space-y-2 text-sm text-emerald-800">
             <li className="font-medium">
-              <span className="font-normal">Upload your exam questions in markdown format - we'll handle the rest</span>
+              <span className="font-normal">Upload your exam questions in markdown format - we&apos;ll handle the rest</span>
             </li>
             <li className="font-medium">
               <span className="font-normal">Choose an exam from your library and start building your knowledge</span>

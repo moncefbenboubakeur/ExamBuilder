@@ -8,7 +8,7 @@ import { supabase } from '@/lib/supabaseClient';
 export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
 
   useEffect(() => {
     const checkUser = async () => {

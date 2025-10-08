@@ -52,12 +52,12 @@ export default function ResultScreen({
       </div>
 
       <div className="mt-6 text-center">
-        <a
-          href="/"
+        <button
+          onClick={() => window.location.href = '/'}
           className="text-blue-600 hover:text-blue-700 underline text-sm"
         >
           Back to Dashboard
-        </a>
+        </button>
       </div>
     </div>
   );
