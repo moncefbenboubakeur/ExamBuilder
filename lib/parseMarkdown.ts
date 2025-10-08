@@ -117,6 +117,14 @@ function parseOptions(optionsText: string): Record<string, string> | null {
   return null;
 }
 
+// Type for AST nodes
+interface ASTNode {
+  type: string;
+  children?: ASTNode[];
+  value?: string;
+  [key: string]: unknown;
+}
+
 /**
  * Alternative parser using remark for more robust parsing
  */
@@ -125,18 +133,18 @@ export async function parseMarkdownWithRemark(
 ): Promise<ParsedQuestion[]> {
   const processor = unified().use(remarkParse).use(remarkGfm);
 
-  const tree = processor.parse(markdownContent);
+  const tree = processor.parse(markdownContent) as ASTNode;
   const questions: ParsedQuestion[] = [];
 
   // Find table nodes
-  const visit = (node: Record<string, unknown>) => {
-    if (node.type === 'table') {
+  const visit = (node: ASTNode): void => {
+    if (node.type === 'table' && node.children) {
       const rows = node.children.slice(1); // Skip header row
 
       for (const row of rows) {
-        if (row.type === 'tableRow' && row.children.length >= 6) {
+        if (row.type === 'tableRow' && row.children && row.children.length >= 6) {
           try {
-            const cells = row.children.map((cell: Record<string, unknown>) =>
+            const cells = row.children.map((cell: ASTNode) =>
               extractTextFromNode(cell)
             );
 
@@ -178,9 +186,9 @@ export async function parseMarkdownWithRemark(
 /**
  * Extract text content from a remark node
  */
-function extractTextFromNode(node: Record<string, unknown>): string {
-  if (node.type === 'text') {
-    return node.value;
+function extractTextFromNode(node: ASTNode): string {
+  if (node.type === 'text' && node.value) {
+    return node.value as string;
   }
 
   if (node.children) {
