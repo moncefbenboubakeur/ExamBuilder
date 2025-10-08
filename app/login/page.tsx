@@ -33,7 +33,7 @@ export default function LoginPage() {
         console.error('❌ Magic Link Error:', error);
         console.error('  Error name:', error.name);
         console.error('  Error message:', error.message);
-        console.error('  Error status:', (error as any).status);
+        console.error('  Error status:', 'status' in error ? (error as { status?: number }).status : 'unknown');
         throw error;
       }
 
@@ -77,7 +77,7 @@ export default function LoginPage() {
         console.error('❌ Password Login Error:', error);
         console.error('  Error name:', error.name);
         console.error('  Error message:', error.message);
-        console.error('  Error status:', (error as any).status);
+        console.error('  Error status:', 'status' in error ? (error as { status?: number }).status : 'unknown');
         throw error;
       }
 
