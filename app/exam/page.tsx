@@ -29,26 +29,7 @@ export default function ExamPage() {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [initialized, setInitialized] = useState(false);
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push('/login');
-        return;
-      }
-      setUser(user);
-
-      // Prevent double initialization in React Strict Mode
-      if (!initialized) {
-        setInitialized(true);
-        initializeExam(user.id);
-      }
-    };
-
-    checkAuth();
-  }, [router, initialized, initializeExam]);
-
-  const initializeExam = useCallback(async (userId: string) => {
+  const initializeExam = useCallback(async () => {
     try {
       // Fetch questions
       let url = '/api/questions';
@@ -94,6 +75,25 @@ export default function ExamPage() {
       setLoading(false);
     }
   }, [examId, retryIds, router]);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+      setUser(user);
+
+      // Prevent double initialization in React Strict Mode
+      if (!initialized) {
+        setInitialized(true);
+        initializeExam();
+      }
+    };
+
+    checkAuth();
+  }, [router, initialized, initializeExam]);
 
   const isMultipleChoice = (question: Question) => {
     return question.correct_answer.includes(',');
