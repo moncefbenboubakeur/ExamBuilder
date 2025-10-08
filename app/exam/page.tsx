@@ -51,19 +51,34 @@ function ExamContent() {
       if (data.questions && data.questions.length > 0) {
         setQuestions(data.questions);
 
-        // Create exam session
-        const sessionResponse = await fetch('/api/session/start', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            examId: examId || data.questions[0]?.exam_id,
-            questionIds: data.questions.map((q: Question) => q.id),
-          }),
-        });
+        // Check for existing incomplete session for this exam
+        const targetExamId = examId || data.questions[0]?.exam_id;
+        const { data: existingSessions } = await supabase
+          .from('exam_sessions')
+          .select('id')
+          .eq('exam_id', targetExamId)
+          .eq('completed', false)
+          .order('created_at', { ascending: false })
+          .limit(1);
 
-        const sessionData = await sessionResponse.json();
-        if (sessionData.success) {
-          setSessionId(sessionData.session.id);
+        if (existingSessions && existingSessions.length > 0) {
+          // Reuse existing incomplete session
+          setSessionId(existingSessions[0].id);
+        } else {
+          // Create new exam session only if none exists
+          const sessionResponse = await fetch('/api/session/start', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              examId: targetExamId,
+              questionIds: data.questions.map((q: Question) => q.id),
+            }),
+          });
+
+          const sessionData = await sessionResponse.json();
+          if (sessionData.success) {
+            setSessionId(sessionData.session.id);
+          }
         }
       } else {
         router.push('/');
@@ -254,7 +269,7 @@ function ExamContent() {
   const canFinish = totalAnswered === questions.length;
 
   return (
-    <div className="bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
+    <div className="py-8 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Top bar with Exit button and Timer */}
         <div className="flex justify-between items-center mb-4">
