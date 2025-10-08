@@ -1,4 +1,4 @@
-# Exam Simulator - Markdown-Based Testing Platform
+# ExamBuilder.net - Markdown-Based Testing Platform
 
 A modern web application for uploading and taking exams from Markdown files. Built with Next.js 15, Supabase, and Tailwind CSS.
 
@@ -33,7 +33,7 @@ A modern web application for uploading and taking exams from Markdown files. Bui
 
 1. Clone the repository:
 ```bash
-cd exam-simulator
+cd exambuilder
 ```
 
 2. Install dependencies:
@@ -98,7 +98,7 @@ Upload `.md` files with questions in this table format:
 ## Project Structure
 
 ```
-exam-simulator/
+exambuilder/
 ├── app/
 │   ├── api/              # API routes
 │   │   ├── upload/       # File upload endpoint

@@ -1,4 +1,4 @@
-# Setup Instructions
+# ExamBuilder.net - Setup Instructions
 
 ## Prerequisites
 - Supabase account and project created

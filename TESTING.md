@@ -1,4 +1,4 @@
-# Testing Authentication
+# ExamBuilder.net - Testing Authentication
 
 ## Quick Test Steps
 
