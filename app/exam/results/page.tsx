@@ -19,25 +19,6 @@ export default function ResultsPage() {
   } | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push('/login');
-        return;
-      }
-
-      if (!sessionId) {
-        router.push('/');
-        return;
-      }
-
-      fetchResults();
-    };
-
-    checkAuth();
-  }, [router, sessionId, fetchResults]);
-
   const fetchResults = useCallback(async () => {
     if (!sessionId) return;
 
@@ -77,6 +58,25 @@ export default function ResultsPage() {
       setLoading(false);
     }
   }, [router, sessionId]);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+
+      if (!sessionId) {
+        router.push('/');
+        return;
+      }
+
+      fetchResults();
+    };
+
+    checkAuth();
+  }, [router, sessionId, fetchResults]);
 
   const handleRetryAll = () => {
     router.push('/exam');
