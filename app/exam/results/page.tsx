@@ -83,7 +83,7 @@ export default function ResultsPage() {
   };
 
   const handleRetryWrong = () => {
-    if (results?.wrongQuestionIds.length > 0) {
+    if (results?.wrongQuestionIds && results.wrongQuestionIds.length > 0) {
       const ids = results.wrongQuestionIds.join(',');
       router.push(`/exam?retry=${ids}`);
     }
