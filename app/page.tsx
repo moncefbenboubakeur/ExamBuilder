@@ -13,26 +13,6 @@ export default function Home() {
   const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
 
-  useEffect(() => {
-    // Check auth status
-    const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-      setAuthChecked(true);
-      if (!user) {
-        router.push('/login');
-      }
-    };
-
-    checkAuth();
-  }, [router]);
-
-  useEffect(() => {
-    if (user && authChecked) {
-      fetchExams();
-    }
-  }, [user, authChecked, fetchExams]);
-
   const fetchExams = useCallback(async () => {
     try {
       const response = await fetch('/api/exams');
@@ -54,6 +34,26 @@ export default function Home() {
       setLoading(false);
     }
   }, [router]);
+
+  useEffect(() => {
+    // Check auth status
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      setAuthChecked(true);
+      if (!user) {
+        router.push('/login');
+      }
+    };
+
+    checkAuth();
+  }, [router]);
+
+  useEffect(() => {
+    if (user && authChecked) {
+      fetchExams();
+    }
+  }, [user, authChecked, fetchExams]);
 
   const handleUploadSuccess = () => {
     fetchExams();
