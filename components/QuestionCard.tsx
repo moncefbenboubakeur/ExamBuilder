@@ -1,8 +1,21 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Question } from '@/lib/supabaseClient';
-import { CheckCircle, XCircle, Eye, EyeOff } from 'lucide-react';
+import { Question, AIAnalysis } from '@/lib/supabaseClient';
+import {
+  CheckCircle,
+  XCircle,
+  Eye,
+  EyeOff,
+  Users,
+  Bot,
+  MessageCircle,
+  ChevronDown,
+  ChevronUp,
+  BookOpen,
+  X,
+  FileText
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface QuestionCardProps {
@@ -25,10 +38,19 @@ export default function QuestionCard({
   multipleChoice = false,
 }: QuestionCardProps) {
   const [revealed, setRevealed] = useState(showCorrectAnswer);
+  const [showFullAIReasoning, setShowFullAIReasoning] = useState(false);
+  const [expandedOptions, setExpandedOptions] = useState<Set<string>>(new Set());
+
+  // Normalize ai_analysis to single object
+  const aiAnalysis = Array.isArray(question.ai_analysis)
+    ? question.ai_analysis[0]
+    : question.ai_analysis;
 
   // Reset revealed state when question changes
   useEffect(() => {
     setRevealed(false);
+    setShowFullAIReasoning(false);
+    setExpandedOptions(new Set());
   }, [question.id]);
 
   // Get all available options dynamically from the question
@@ -37,6 +59,16 @@ export default function QuestionCard({
   const isCorrect = (option: string) => {
     const correctAnswers = question.correct_answer.toUpperCase().split(',').map(a => a.trim());
     return correctAnswers.includes(option.toUpperCase());
+  };
+
+  const toggleOptionExpansion = (option: string) => {
+    const newExpanded = new Set(expandedOptions);
+    if (newExpanded.has(option)) {
+      newExpanded.delete(option);
+    } else {
+      newExpanded.add(option);
+    }
+    setExpandedOptions(newExpanded);
   };
 
   const getOptionClassName = (option: string) => {
@@ -52,76 +84,204 @@ export default function QuestionCard({
       if (isSelected && !isCorrectOption) {
         return 'border-red-600 bg-red-50 text-red-950 font-medium';
       }
-      return 'border-gray-300 bg-white text-gray-800';
+      return 'border-neutral-300 bg-white text-neutral-800';
     } else if (isSelected) {
-      return 'border-blue-600 bg-blue-50 text-blue-950 font-medium';
+      return 'border-indigo-600 bg-indigo-50 text-indigo-950 font-medium';
     }
 
-    return 'border-gray-300 bg-white text-gray-900 hover:border-blue-400 hover:bg-blue-50';
+    return 'border-neutral-300 bg-white text-neutral-900 hover:border-indigo-400 hover:bg-indigo-50';
   };
 
+  // Check if sources disagree
+  const sourcesDisagree = aiAnalysis &&
+    (question.correct_answer !== aiAnalysis.ai_recommended_answer ||
+      (question.community_vote && question.community_vote !== aiAnalysis.ai_recommended_answer));
+
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6 max-w-3xl mx-auto">
+    <div className="bg-white rounded-2xl shadow-lg p-6 max-w-3xl mx-auto border-2 border-neutral-100">
+      {/* Question Header */}
       <div className="mb-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
-            <h3 className="text-sm font-semibold text-gray-500">
+            <h3 className="text-sm font-semibold text-neutral-500">
               Question {questionNumber}
             </h3>
             {multipleChoice && (
-              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-medium">
+              <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full font-medium">
                 Multiple Choice
               </span>
             )}
           </div>
           {question.has_illustration && (
-            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
+            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">
               Has Illustration
             </span>
           )}
         </div>
-        <p className="text-xl font-semibold text-gray-950 leading-relaxed">
+        <p className="text-xl font-semibold text-neutral-950 leading-relaxed">
           {question.question_text}
         </p>
         {multipleChoice && (
-          <p className="text-sm text-gray-600 mt-2 italic">
+          <p className="text-sm text-neutral-600 mt-2 italic">
             Select all answers that apply
           </p>
         )}
       </div>
 
-      <div className="space-y-3 mb-6">
-        {options.map((option) => (
-          <button
-            key={option}
-            onClick={() => !revealed && onAnswerSelect(option)}
-            disabled={revealed}
-            className={cn(
-              'w-full text-left p-4 border-2 rounded-lg transition-all duration-200',
-              getOptionClassName(option),
-              revealed ? 'cursor-default' : 'cursor-pointer'
+      {/* Answer Summary - Three Sources of Truth (when revealed) */}
+      {revealed && (
+        <div className="bg-neutral-50 rounded-2xl p-5 mb-6 border-2 border-neutral-200">
+          <h4 className="text-xs font-bold text-neutral-600 mb-4 uppercase tracking-wide flex items-center gap-2">
+            <FileText className="w-4 h-4" />
+            Expert Opinions
+          </h4>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+            {/* Exam Creator's Answer */}
+            <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-3">
+              <div className="text-xs font-semibold text-blue-700 mb-1">📝 Exam Creator</div>
+              <div className="text-2xl font-bold text-blue-900">{question.correct_answer}</div>
+              <div className="text-xs text-blue-600 mt-1">From markdown file</div>
+            </div>
+
+            {/* Community Vote */}
+            {question.community_vote && (
+              <div className="bg-green-50 border-2 border-green-200 rounded-xl p-3">
+                <div className="text-xs font-semibold text-green-700 mb-1">👥 Community</div>
+                <div className="text-2xl font-bold text-green-900">{question.community_vote}</div>
+                <div className="text-xs text-green-600 mt-1">Crowd wisdom</div>
+              </div>
             )}
-          >
-            <div className="flex items-start gap-3">
-              <span className="font-bold min-w-[24px]">{option}.</span>
-              <span className="flex-1">
-                {question.options[option]}
-              </span>
-              {revealed && isCorrect(option) && (
-                <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
-              )}
-              {revealed && (multipleChoice ? selectedAnswers.includes(option) : selectedAnswer === option) && !isCorrect(option) && (
-                <XCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+
+            {/* AI Recommendation */}
+            {aiAnalysis && (
+              <div className="bg-purple-50 border-2 border-purple-200 rounded-xl p-3">
+                <div className="text-xs font-semibold text-purple-700 mb-1">🤖 AI Analysis</div>
+                <div className="text-2xl font-bold text-purple-900">
+                  {aiAnalysis.ai_recommended_answer}
+                </div>
+                <div className="text-xs text-purple-600 mt-1">
+                  {Math.round(aiAnalysis.ai_confidence_score * 100)}% confidence
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Warning if answers disagree */}
+          {sourcesDisagree && (
+            <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-3 text-sm mb-3">
+              <div className="flex items-start gap-2">
+                <span className="text-lg">⚠️</span>
+                <div className="flex-1">
+                  <p className="font-semibold text-yellow-900 mb-1">Sources disagree on the answer!</p>
+                  <p className="text-yellow-800 text-xs">
+                    Review all explanations carefully to understand why. This may indicate a controversial or outdated question.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Show Full AI Reasoning button */}
+          {aiAnalysis && (
+            <button
+              onClick={() => setShowFullAIReasoning(true)}
+              className="text-purple-600 hover:text-purple-700 text-sm font-medium flex items-center gap-2 transition-colors"
+            >
+              <BookOpen className="w-4 h-4" />
+              Show Full AI Reasoning
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Options */}
+      <div className="space-y-3 mb-6">
+        {options.map((option) => {
+          const isCorrectOption = isCorrect(option);
+          const shortExplanation = aiAnalysis?.option_short_explanations?.[option];
+          const longExplanation = aiAnalysis?.option_long_explanations?.[option];
+          const isExpanded = expandedOptions.has(option);
+
+          return (
+            <div key={option}>
+              {/* Option Button */}
+              <button
+                onClick={() => !revealed && onAnswerSelect(option)}
+                disabled={revealed}
+                className={cn(
+                  'w-full text-left p-4 border-2 rounded-xl transition-all duration-200',
+                  getOptionClassName(option),
+                  revealed ? 'cursor-default' : 'cursor-pointer'
+                )}
+              >
+                <div className="flex items-start gap-3">
+                  <span className="font-bold min-w-[24px]">{option}.</span>
+                  <span className="flex-1">
+                    {question.options[option]}
+                  </span>
+                  {revealed && isCorrectOption && (
+                    <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+                  )}
+                  {revealed && (multipleChoice ? selectedAnswers.includes(option) : selectedAnswer === option) && !isCorrectOption && (
+                    <XCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+                  )}
+                </div>
+              </button>
+
+              {/* AI Short Explanation (always visible when revealed) */}
+              {revealed && shortExplanation && (
+                <div className="mt-2 p-3 rounded-xl text-sm bg-purple-50 border-2 border-purple-200 text-purple-900">
+                  <div className="flex items-start gap-2">
+                    <Bot className="w-4 h-4 mt-0.5 flex-shrink-0 text-purple-600" />
+                    <div className="flex-1">
+                      <p className="font-medium">{shortExplanation}</p>
+
+                      {longExplanation && (
+                        <button
+                          onClick={() => toggleOptionExpansion(option)}
+                          className="mt-2 text-xs font-semibold flex items-center gap-1 hover:underline text-purple-700"
+                        >
+                          {isExpanded ? (
+                            <>
+                              <ChevronUp className="w-3 h-3" />
+                              Show Less
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown className="w-3 h-3" />
+                              Learn More
+                            </>
+                          )}
+                        </button>
+                      )}
+
+                      {/* Long Explanation (expandable) */}
+                      {isExpanded && longExplanation && (
+                        <div className="mt-3 pt-3 border-t border-purple-300/30">
+                          <p className="font-semibold text-xs mb-2 flex items-center gap-1">
+                            <BookOpen className="w-3 h-3" />
+                            Detailed AI Analysis
+                          </p>
+                          <div className="whitespace-pre-line text-xs leading-relaxed">
+                            {longExplanation}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
-          </button>
-        ))}
+          );
+        })}
       </div>
 
-      <div className="flex items-center justify-between pt-4 border-t">
+      {/* Show/Hide Answer Button */}
+      <div className="flex items-center justify-between pt-4 border-t-2 border-neutral-200">
         <button
           onClick={() => setRevealed(!revealed)}
-          className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+          className="flex items-center gap-2 px-5 py-3 bg-neutral-100 text-neutral-700 rounded-2xl hover:bg-neutral-200 transition-all duration-200 font-medium"
         >
           {revealed ? (
             <>
@@ -135,13 +295,51 @@ export default function QuestionCard({
             </>
           )}
         </button>
-
-        {revealed && question.community_vote && (
-          <div className="text-sm text-gray-700">
-            Community Vote: <span className="font-semibold text-gray-900">{question.community_vote}</span>
-          </div>
-        )}
       </div>
+
+      {/* Full AI Reasoning Modal */}
+      {showFullAIReasoning && aiAnalysis && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-white border-b-2 border-neutral-200 px-6 py-4 flex justify-between items-center rounded-t-2xl">
+              <h3 className="text-lg font-bold flex items-center gap-2">
+                <Bot className="w-5 h-5 text-purple-600" />
+                AI Full Reasoning
+              </h3>
+              <button
+                onClick={() => setShowFullAIReasoning(false)}
+                className="text-neutral-500 hover:text-neutral-700 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-4">
+              {/* Summary */}
+              <div className="bg-purple-50 rounded-xl p-4 border-2 border-purple-200">
+                <h4 className="font-semibold mb-2 flex items-center gap-2">
+                  <span className="text-lg">💡</span>
+                  Summary
+                </h4>
+                <p className="text-sm leading-relaxed">{aiAnalysis.reasoning_summary}</p>
+              </div>
+
+              {/* Detailed Analysis */}
+              <div>
+                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                  <BookOpen className="w-4 h-4" />
+                  Detailed Analysis
+                </h4>
+                <div className="text-sm whitespace-pre-line leading-relaxed bg-neutral-50 rounded-xl p-4 border-2 border-neutral-200">
+                  {aiAnalysis.reasoning_detailed}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

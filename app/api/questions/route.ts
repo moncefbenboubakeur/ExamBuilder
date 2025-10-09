@@ -20,7 +20,10 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from('questions')
-      .select('*')
+      .select(`
+        *,
+        ai_analysis:question_ai_analysis(*)
+      `)
       .order('question_number', { ascending: true });
 
     // Filter by exam_id if provided
@@ -44,10 +47,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Transform ai_analysis from array to single object
+    const transformedData = data?.map(question => ({
+      ...question,
+      ai_analysis: Array.isArray(question.ai_analysis) && question.ai_analysis.length > 0
+        ? question.ai_analysis[0]
+        : null
+    }));
+
     return NextResponse.json({
       success: true,
-      questions: data || [],
-      count: data?.length || 0,
+      questions: transformedData || [],
+      count: transformedData?.length || 0,
     });
   } catch (error) {
     console.error('Questions fetch error:', error);

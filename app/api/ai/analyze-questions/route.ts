@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import Anthropic from '@anthropic-ai/sdk';
-
-// Initialize Anthropic client
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+import OpenAI from 'openai';
 
 interface AnalysisRequest {
   questionIds: string[];
@@ -42,11 +38,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No question IDs provided' }, { status: 400 });
     }
 
-    // Check if API key is configured
-    if (!process.env.ANTHROPIC_API_KEY) {
-      console.error('ANTHROPIC_API_KEY not configured');
+    // Get AI settings from database
+    const { data: settings, error: settingsError } = await supabase
+      .from('ai_settings')
+      .select('*')
+      .limit(1)
+      .single();
+
+    if (settingsError || !settings) {
+      console.error('Failed to fetch AI settings:', settingsError);
       return NextResponse.json({
-        error: 'AI analysis not configured. Please add ANTHROPIC_API_KEY to environment variables.'
+        error: 'AI settings not configured'
+      }, { status: 500 });
+    }
+
+    // Check if appropriate API key is configured
+    if (settings.provider === 'anthropic' && !process.env.ANTHROPIC_API_KEY) {
+      return NextResponse.json({
+        error: 'Anthropic API key not configured'
+      }, { status: 500 });
+    }
+    if (settings.provider === 'openai' && !process.env.OPENAI_API_KEY) {
+      return NextResponse.json({
+        error: 'OpenAI API key not configured'
       }, { status: 500 });
     }
 
@@ -70,7 +84,7 @@ export async function POST(request: NextRequest) {
       const batch = questions.slice(i, i + batchSize);
       const batchPromises = batch.map(async (q) => {
         try {
-          return await analyzeQuestion(q);
+          return await analyzeQuestion(q, settings);
         } catch (error) {
           console.error(`Failed to analyze question ${q.id}:`, error);
           errors.push({ questionId: q.id, error: String(error) });
@@ -111,6 +125,7 @@ export async function POST(request: NextRequest) {
       analyzed: results.length,
       failed: errors.length,
       errors: errors.length > 0 ? errors : undefined,
+      model_used: `${settings.model_name} (${settings.provider})`,
     });
 
   } catch (error) {
@@ -122,70 +137,48 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function analyzeQuestion(question: any): Promise<any> {
-  // CRITICAL: Do NOT send correct_answer or community_vote to AI
-  // AI must solve independently!
+async function analyzeQuestion(question: any, settings: any): Promise<any> {
+  const prompt = buildPrompt(question);
 
-  const prompt = `You are an expert taking an exam. Solve this question using your knowledge.
+  let responseText = '';
 
-IMPORTANT: Do NOT assume any answer is correct. Analyze the question independently and determine the BEST answer based on your expertise.
+  // Call appropriate AI provider based on settings
+  if (settings.provider === 'anthropic') {
+    const anthropic = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY,
+    });
 
-Question: ${question.question_text}
+    const message = await anthropic.messages.create({
+      model: settings.model_id,
+      max_tokens: 2500,
+      messages: [
+        { role: 'user', content: prompt }
+      ],
+    });
 
-Options:
-${Object.entries(question.options).map(([key, val]) => `${key}. ${val}`).join('\n')}
+    responseText = message.content[0].type === 'text'
+      ? message.content[0].text
+      : '';
 
-Requirements:
-1. Determine which option is BEST (your independent choice)
-2. Provide confidence score (0-1) for your answer
-3. For EACH option, explain why it's good or bad:
-   - SHORT explanation (1 line, max 15 words) - Quick verdict
-   - LONG explanation (3-5 sentences) - Detailed technical analysis with:
-     * Why it's correct/incorrect
-     * Key concepts explanation
-     * Common misconceptions
-     * Real-world context
-4. Provide overall reasoning summary and detailed explanation
+  } else if (settings.provider === 'openai') {
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
 
-Be objective and critical. If multiple options seem valid, explain the nuances.
+    const completion = await openai.chat.completions.create({
+      model: settings.model_id,
+      messages: [
+        { role: 'user', content: prompt }
+      ],
+      max_tokens: 2500,
+      response_format: { type: 'json_object' },
+    });
 
-Example format for long explanation:
-"Storage Transfer Service: Used for batch or one-time data transfers to Cloud Storage — not continuous low-latency access.
+    responseText = completion.choices[0]?.message?.content || '';
 
-Why it's not the best answer:
-- Designed for bulk data migration
-- Not suitable for real-time workload access
-- Higher latency than direct connectivity solutions
-- Doesn't provide ongoing network connectivity"
-
-Return ONLY valid JSON in this exact format (no markdown, no code blocks):
-{
-  "recommended_answer": "C",
-  "confidence_score": 0.92,
-  "reasoning_summary": "Brief 2-3 sentence summary of why you chose this answer",
-  "reasoning_detailed": "Full comprehensive explanation with sections and bullet points",
-  "options": {
-    "A": {
-      "short": "One-line verdict (max 15 words)",
-      "long": "Detailed 3-5 sentence explanation with technical reasoning"
-    },
-    "B": { "short": "...", "long": "..." },
-    "C": { "short": "...", "long": "..." },
-    "D": { "short": "...", "long": "..." }
+  } else {
+    throw new Error(`Unsupported AI provider: ${settings.provider}`);
   }
-}`;
-
-  const message = await anthropic.messages.create({
-    model: 'claude-3-5-sonnet-20241022',
-    max_tokens: 2500,
-    messages: [
-      { role: 'user', content: prompt }
-    ],
-  });
-
-  const responseText = message.content[0].type === 'text'
-    ? message.content[0].text
-    : '';
 
   // Parse JSON response (handle potential markdown code blocks)
   let jsonText = responseText.trim();
@@ -215,4 +208,46 @@ Return ONLY valid JSON in this exact format (no markdown, no code blocks):
     reasoning_summary: parsed.reasoning_summary,
     reasoning_detailed: parsed.reasoning_detailed,
   };
+}
+
+function buildPrompt(question: any): string {
+  return `You are an expert taking an exam. Solve this question using your knowledge.
+
+IMPORTANT: Do NOT assume any answer is correct. Analyze the question independently and determine the BEST answer based on your expertise.
+
+Question: ${question.question_text}
+
+Options:
+${Object.entries(question.options).map(([key, val]) => `${key}. ${val}`).join('\n')}
+
+Requirements:
+1. Determine which option is BEST (your independent choice)
+2. Provide confidence score (0-1) for your answer
+3. For EACH option, explain why it's good or bad:
+   - SHORT explanation (1 line, max 15 words) - Quick verdict
+   - LONG explanation (3-5 sentences) - Detailed technical analysis with:
+     * Why it's correct/incorrect
+     * Key concepts explanation
+     * Common misconceptions
+     * Real-world context
+4. Provide overall reasoning summary and detailed explanation
+
+Be objective and critical. If multiple options seem valid, explain the nuances.
+
+Return ONLY valid JSON in this exact format (no markdown, no code blocks):
+{
+  "recommended_answer": "C",
+  "confidence_score": 0.92,
+  "reasoning_summary": "Brief 2-3 sentence summary of why you chose this answer",
+  "reasoning_detailed": "Full comprehensive explanation with sections and bullet points",
+  "options": {
+    "A": {
+      "short": "One-line verdict (max 15 words)",
+      "long": "Detailed 3-5 sentence explanation with technical reasoning"
+    },
+    "B": { "short": "...", "long": "..." },
+    "C": { "short": "...", "long": "..." },
+    "D": { "short": "...", "long": "..." }
+  }
+}`;
 }

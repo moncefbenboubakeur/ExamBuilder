@@ -23,6 +23,19 @@ export type Exam = {
   question_count?: number; // Virtual field from join/count
 };
 
+export type AIAnalysis = {
+  id: string;
+  question_id: string;
+  ai_recommended_answer: string;
+  ai_confidence_score: number;
+  option_short_explanations: Record<string, string>;
+  option_long_explanations: Record<string, string>;
+  reasoning_summary: string;
+  reasoning_detailed: string;
+  analyzed_at: string;
+  created_at: string;
+};
+
 export type Question = {
   id: string;
   exam_id: string;
@@ -33,6 +46,7 @@ export type Question = {
   community_vote: string;
   has_illustration: boolean;
   created_at: string;
+  ai_analysis?: AIAnalysis | AIAnalysis[] | null; // Optional - may not exist for old questions
 };
 
 export type ExamSession = {
