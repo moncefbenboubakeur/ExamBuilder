@@ -6,7 +6,6 @@ import { supabase } from '@/lib/supabaseClient';
 import { Question } from '@/lib/supabaseClient';
 import QuestionCard from '@/components/QuestionCard';
 import ExamProgress from '@/components/ExamProgress';
-import NavigationButtons from '@/components/NavigationButtons';
 import ExamTimer from '@/components/ExamTimer';
 import { isAnswerCorrect } from '@/lib/examLogic';
 import { X, ChevronLeft, ChevronRight, CheckCircle } from 'lucide-react';

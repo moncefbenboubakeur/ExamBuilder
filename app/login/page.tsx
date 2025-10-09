@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { Mail, CheckCircle, AlertCircle, Key, BookOpen } from 'lucide-react';
+import { CheckCircle, AlertCircle, Key, BookOpen } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');

@@ -20,7 +20,6 @@ interface QuestionBuilderCardProps {
   index: number;
   onEdit?: (question: Question) => void;
   onDelete?: (questionId: string) => void;
-  onPreview?: (question: Question) => void;
   isDragging?: boolean;
 }
 
@@ -29,7 +28,6 @@ export default function QuestionBuilderCard({
   index,
   onEdit,
   onDelete,
-  onPreview,
   isDragging = false,
 }: QuestionBuilderCardProps) {
   const [showPreview, setShowPreview] = useState(false);

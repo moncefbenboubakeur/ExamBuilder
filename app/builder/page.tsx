@@ -143,7 +143,7 @@ export default function ExamBuilderPage() {
                     Exam Information
                   </h2>
                   <p className="text-neutral-600">
-                    Let's start with the basics about your exam
+                    Let&apos;s start with the basics about your exam
                   </p>
                 </div>
 

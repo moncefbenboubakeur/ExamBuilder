@@ -2,12 +2,19 @@
 
 ## Overview
 
-Add AI-generated explanations to exam questions with two-tier progressive disclosure:
+Add AI as an **independent expert** that solves exam questions and provides explanations. The AI analyzes questions without seeing the exam creator's answer or community vote, providing a third opinion to help users make informed decisions.
+
+**Three Sources of Truth:**
+- **📝 Exam Creator's Answer**: From the markdown file "Correct Answer" column (may be wrong or outdated)
+- **👥 Community Vote**: Collective wisdom of users who took the exam
+- **🤖 AI Analysis**: Independent AI determination with detailed explanations
+
+**Two-tier explanations for each option:**
 - **Short explanations**: Quick one-line verdicts (always visible when answer revealed)
 - **Long explanations**: Detailed reasoning (expandable per option)
 - **Full AI reasoning**: Complete analysis (modal/overlay)
 
-**Key Requirement**: Pre-compute all explanations during exam upload to avoid consuming AI tokens on every user view.
+**Key Requirement**: Pre-compute all AI analysis during exam upload to avoid consuming AI tokens on every user view.
 
 ---
 
@@ -233,50 +240,55 @@ export async function POST(request: NextRequest) {
 }
 
 async function analyzeQuestion(question: any): Promise<any> {
-  const prompt = `You are analyzing an exam question. Provide TWO levels of explanation for each option:
+  // CRITICAL: Do NOT send correct_answer or community_vote to AI
+  // AI must solve independently!
 
-1. SHORT explanation (1 line, max 15 words) - Quick verdict with key reason
-2. LONG explanation (3-5 sentences) - Detailed reasoning with:
-   - Why it's correct/incorrect
-   - Key concepts explanation
-   - Common misconceptions
-   - Real-world context
+  const prompt = `You are an expert taking an exam. Solve this question using your knowledge.
+
+IMPORTANT: Do NOT assume any answer is correct. Analyze the question independently and determine the BEST answer based on your expertise.
 
 Question: ${question.question_text}
 
 Options:
 ${Object.entries(question.options).map(([key, val]) => `${key}. ${val}`).join('\n')}
 
-Correct Answer: ${question.correct_answer}
-${question.community_vote ? `Community Vote: ${question.community_vote}` : ''}
+Requirements:
+1. Determine which option is BEST (your independent choice)
+2. Provide confidence score (0-1) for your answer
+3. For EACH option, explain why it's good or bad:
+   - SHORT explanation (1 line, max 15 words) - Quick verdict
+   - LONG explanation (3-5 sentences) - Detailed technical analysis with:
+     * Why it's correct/incorrect
+     * Key concepts explanation
+     * Common misconceptions
+     * Real-world context
+4. Provide overall reasoning summary and detailed explanation
 
-Provide:
-- Your recommended answer (letter)
-- Confidence score (0-1)
-- Overall reasoning summary (2-3 sentences)
-- Overall detailed reasoning (comprehensive explanation like the example below)
-- For each option: short and long explanations
+Be objective and critical. If multiple options seem valid, explain the nuances.
 
 Example format for long explanation:
 "Storage Transfer Service: Used for batch or one-time data transfers to Cloud Storage — not continuous low-latency access.
 
-Why it's wrong:
+Why it's not the best answer:
 - Designed for bulk data migration
 - Not suitable for real-time workload access
-- Higher latency than direct connectivity solutions"
+- Higher latency than direct connectivity solutions
+- Doesn't provide ongoing network connectivity"
 
 Return ONLY valid JSON in this exact format:
 {
   "recommended_answer": "C",
-  "confidence_score": 0.95,
-  "reasoning_summary": "Brief 2-3 sentence summary",
+  "confidence_score": 0.92,
+  "reasoning_summary": "Brief 2-3 sentence summary of why you chose this answer",
   "reasoning_detailed": "Full comprehensive explanation with sections and bullet points",
   "options": {
     "A": {
       "short": "One-line verdict (max 15 words)",
-      "long": "Detailed 3-5 sentence explanation with why it's right/wrong"
+      "long": "Detailed 3-5 sentence explanation with technical reasoning"
     },
-    "B": { "short": "...", "long": "..." }
+    "B": { "short": "...", "long": "..." },
+    "C": { "short": "...", "long": "..." },
+    "D": { "short": "...", "long": "..." }
   }
 }`;
 
@@ -491,39 +503,68 @@ export default function QuestionCard({
         )}
       </div>
 
-      {/* Answer Summary (when revealed) */}
+      {/* Answer Summary - Three Sources of Truth (when revealed) */}
       {revealed && (
-        <div className="bg-gray-50 rounded-lg p-4 space-y-2 mb-4">
-          <div className="flex items-center gap-2">
-            <CheckCircle className="w-5 h-5 text-green-600" />
-            <span className="font-medium">Correct Answer: {question.correct_answer}</span>
+        <div className="bg-gray-50 rounded-lg p-4 mb-4">
+          <h4 className="text-xs font-semibold text-gray-600 mb-3 uppercase">Three Expert Opinions</h4>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+            {/* Exam Creator's Answer */}
+            <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-3">
+              <div className="text-xs font-semibold text-blue-700 mb-1">📝 Exam Creator</div>
+              <div className="text-2xl font-bold text-blue-900">{question.correct_answer}</div>
+              <div className="text-xs text-blue-600 mt-1">From markdown file</div>
+            </div>
+
+            {/* Community Vote */}
+            {question.community_vote && (
+              <div className="bg-green-50 border-2 border-green-200 rounded-lg p-3">
+                <div className="text-xs font-semibold text-green-700 mb-1">👥 Community</div>
+                <div className="text-2xl font-bold text-green-900">{question.community_vote}</div>
+                <div className="text-xs text-green-600 mt-1">Crowd wisdom</div>
+              </div>
+            )}
+
+            {/* AI Recommendation */}
+            {question.ai_analysis && (
+              <div className="bg-purple-50 border-2 border-purple-200 rounded-lg p-3">
+                <div className="text-xs font-semibold text-purple-700 mb-1">🤖 AI Analysis</div>
+                <div className="text-2xl font-bold text-purple-900">
+                  {question.ai_analysis.ai_recommended_answer}
+                </div>
+                <div className="text-xs text-purple-600 mt-1">
+                  {Math.round(question.ai_analysis.ai_confidence_score * 100)}% confidence
+                </div>
+              </div>
+            )}
           </div>
 
-          {question.community_vote && (
-            <div className="flex items-center gap-2 text-sm">
-              <Users className="w-4 h-4 text-blue-600" />
-              <span>Community Vote: <span className="font-semibold">{question.community_vote}</span></span>
+          {/* Warning if answers disagree */}
+          {question.ai_analysis &&
+           (question.correct_answer !== question.ai_analysis.ai_recommended_answer ||
+            (question.community_vote && question.community_vote !== question.ai_analysis.ai_recommended_answer)) && (
+            <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-3 text-sm">
+              <div className="flex items-start gap-2">
+                <span className="text-lg">⚠️</span>
+                <div className="flex-1">
+                  <p className="font-semibold text-yellow-900 mb-1">Sources disagree on the answer!</p>
+                  <p className="text-yellow-800 text-xs">
+                    Review all explanations carefully to understand why. This may indicate a controversial or outdated question.
+                  </p>
+                </div>
+              </div>
             </div>
           )}
 
+          {/* Show Full AI Reasoning button */}
           {question.ai_analysis && (
-            <>
-              <div className="flex items-center gap-2 text-sm">
-                <Bot className="w-4 h-4 text-purple-600" />
-                <span>
-                  AI Recommendation: <span className="font-semibold">{question.ai_analysis.ai_recommended_answer}</span>
-                  {' '}({Math.round(question.ai_analysis.ai_confidence_score * 100)}% confidence)
-                </span>
-              </div>
-
-              <button
-                onClick={() => setShowFullAIReasoning(true)}
-                className="text-purple-600 hover:text-purple-700 text-sm font-medium flex items-center gap-1 mt-2"
-              >
-                <BookOpen className="w-4 h-4" />
-                Show Full AI Reasoning
-              </button>
-            </>
+            <button
+              onClick={() => setShowFullAIReasoning(true)}
+              className="mt-3 text-purple-600 hover:text-purple-700 text-sm font-medium flex items-center gap-1"
+            >
+              <BookOpen className="w-4 h-4" />
+              Show Full AI Reasoning
+            </button>
           )}
         </div>
       )}
@@ -562,23 +603,18 @@ export default function QuestionCard({
                 </div>
               </button>
 
-              {/* Short Explanation (always visible when revealed) */}
+              {/* AI Short Explanation (always visible when revealed) */}
               {revealed && shortExplanation && (
-                <div className={cn(
-                  "mt-2 p-3 rounded-md text-sm",
-                  isCorrectOption
-                    ? "bg-green-50 border border-green-200 text-green-900"
-                    : "bg-red-50 border border-red-200 text-red-900"
-                )}>
+                <div className="mt-2 p-3 rounded-md text-sm bg-purple-50 border border-purple-200 text-purple-900">
                   <div className="flex items-start gap-2">
-                    <MessageCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <Bot className="w-4 h-4 mt-0.5 flex-shrink-0 text-purple-600" />
                     <div className="flex-1">
                       <p className="font-medium">{shortExplanation}</p>
 
                       {longExplanation && (
                         <button
                           onClick={() => toggleOptionExpansion(option)}
-                          className="mt-2 text-xs font-semibold flex items-center gap-1 hover:underline"
+                          className="mt-2 text-xs font-semibold flex items-center gap-1 hover:underline text-purple-700"
                         >
                           {isExpanded ? (
                             <>
@@ -596,10 +632,10 @@ export default function QuestionCard({
 
                       {/* Long Explanation (expandable) */}
                       {isExpanded && longExplanation && (
-                        <div className="mt-3 pt-3 border-t border-current/20">
+                        <div className="mt-3 pt-3 border-t border-purple-300/30">
                           <p className="font-semibold text-xs mb-2 flex items-center gap-1">
                             <BookOpen className="w-3 h-3" />
-                            Detailed Explanation
+                            Detailed AI Analysis
                           </p>
                           <div className="whitespace-pre-line text-xs leading-relaxed">
                             {longExplanation}
@@ -885,15 +921,74 @@ CREATE POLICY "AI analysis insertable by authenticated users"
 
 ---
 
+## How AI Gets Answers - Critical Understanding
+
+**IMPORTANT**: The AI **does NOT** receive the exam creator's answer or community vote!
+
+### The Process:
+
+1. **User uploads markdown** with questions containing:
+   - Question text
+   - Options (A, B, C, D)
+   - Exam creator's "Correct Answer" (may be wrong!)
+   - Community vote (optional)
+
+2. **AI analyzes independently**:
+   - Receives ONLY: Question text + Options
+   - Does NOT receive: Correct answer or community vote
+   - AI solves the question using its own knowledge
+   - Determines best answer based on expertise
+
+3. **Three independent opinions stored**:
+   - 📝 Exam Creator: From markdown "Correct Answer" column
+   - 👥 Community: From markdown "Community Vote" column
+   - 🤖 AI Analysis: AI's independent determination
+
+4. **User sees all three and decides**:
+   - Compare different expert opinions
+   - Read AI's explanations for each option
+   - Make informed decision about correct answer
+
+### Real-World Scenario:
+
+```
+Markdown file says:     Correct Answer = A
+Community voted:        B (65% of users)
+AI independently says:  C (92% confidence)
+
+User sees:
+"⚠️ Sources disagree! Review all explanations."
+
+User reads AI explanation:
+"Option A is outdated (used in older GCP versions)
+ Option B is commonly confused but incorrect because...
+ Option C is the current best practice because..."
+
+User learns WHY and makes informed choice!
+```
+
+### Why This Approach?
+
+✅ **AI as independent expert** - Not biased by potentially wrong answers
+✅ **Quality control** - Catches bad or outdated questions
+✅ **Educational** - Users learn to think critically, not memorize
+✅ **Trust building** - AI explains reasoning, users verify logic
+✅ **Future-proof** - AI knowledge updated, exam files may be old
+
+---
+
 ## Summary
 
 This implementation provides:
 
+✅ **Three independent sources**: Exam creator, Community, AI (unbiased)
 ✅ **Two-tier explanations**: Short (always visible) + Long (on-demand)
 ✅ **Cost-efficient**: Pre-computed during upload, zero tokens per user
 ✅ **Progressive disclosure**: Users control detail level
+✅ **Disagreement detection**: Warns when sources conflict
 ✅ **Rich context**: Full AI reasoning available in modal
 ✅ **Database-backed**: All explanations stored permanently
 ✅ **Graceful degradation**: Works for questions with/without AI analysis
+✅ **Learning tool**: Users learn WHY, not just memorize answers
 
-The system matches the quality of professional exam platforms while maintaining cost efficiency through pre-computation.
+The system transforms the platform from a memorization tool into a critical thinking and learning platform, while maintaining cost efficiency through pre-computation.
