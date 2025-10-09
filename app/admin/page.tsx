@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { AI_MODELS, AIModel } from '@/lib/ai-models';
-import { Shield, Bot, Check, DollarSign, Zap, AlertCircle } from 'lucide-react';
+import { Shield, Bot, Check, DollarSign, Zap, AlertCircle, RefreshCw, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
@@ -33,10 +33,13 @@ export default function AdminPage() {
   const [selectedModel, setSelectedModel] = useState<AIModel | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
+  const [exams, setExams] = useState<Array<{ id: string; title: string; question_count: number }>>([]);
+  const [reanalyzing, setReanalyzing] = useState<string | null>(null);
 
   useEffect(() => {
     checkAuth();
     fetchCurrentSettings();
+    fetchExams();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -72,6 +75,47 @@ export default function AdminPage() {
       }
     } catch (error) {
       console.error('Failed to fetch settings:', error);
+    }
+  }
+
+  async function fetchExams() {
+    try {
+      const response = await fetch('/api/exams');
+      const data = await response.json();
+      if (data.success && data.exams) {
+        setExams(data.exams);
+      }
+    } catch (error) {
+      console.error('Failed to fetch exams:', error);
+    }
+  }
+
+  async function handleReanalyzeExam(examId: string) {
+    setReanalyzing(examId);
+    setMessage(null);
+
+    try {
+      const response = await fetch('/api/admin/reanalyze-exam', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ examId }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setMessage({
+          type: 'success',
+          text: `${data.message}. Analyzed: ${data.analyzed}, Failed: ${data.failed}`
+        });
+      } else {
+        setMessage({ type: 'error', text: data.error || 'Failed to analyze exam' });
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Failed to trigger analysis' });
+      console.error('Reanalyze error:', error);
+    } finally {
+      setReanalyzing(null);
     }
   }
 
@@ -268,6 +312,59 @@ export default function AdminPage() {
               )}
             </button>
           </div>
+        </div>
+
+        {/* Re-analyze Existing Exams Section */}
+        <div className="bg-white rounded-2xl shadow-lg p-6 mt-6 border-2 border-neutral-200">
+          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+            <Sparkles className="w-6 h-6 text-purple-600" />
+            Re-analyze Existing Exams
+          </h2>
+          <p className="text-neutral-600 mb-6">
+            Trigger AI analysis for exams that were uploaded before the AI feature was implemented.
+          </p>
+
+          {exams.length > 0 ? (
+            <div className="space-y-3">
+              {exams.map((exam) => (
+                <div
+                  key={exam.id}
+                  className="flex items-center justify-between p-4 border-2 border-neutral-200 rounded-xl hover:border-purple-300 transition-colors"
+                >
+                  <div>
+                    <h3 className="font-semibold text-lg">{exam.title}</h3>
+                    <p className="text-sm text-neutral-600">
+                      {exam.question_count || 0} questions
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleReanalyzeExam(exam.id)}
+                    disabled={reanalyzing === exam.id}
+                    className={cn(
+                      "px-6 py-3 rounded-xl font-medium transition-all duration-200 flex items-center gap-2",
+                      reanalyzing === exam.id
+                        ? "bg-neutral-300 text-neutral-500 cursor-not-allowed"
+                        : "bg-purple-600 text-white hover:bg-purple-700 shadow-md hover:shadow-lg"
+                    )}
+                  >
+                    {reanalyzing === exam.id ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Analyzing...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="w-4 h-4" />
+                        Analyze with AI
+                      </>
+                    )}
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-neutral-500 italic">No exams found.</p>
+          )}
         </div>
       </div>
     </div>
