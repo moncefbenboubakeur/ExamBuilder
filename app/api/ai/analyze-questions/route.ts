@@ -173,7 +173,7 @@ async function analyzeQuestion(question: QuestionData, settings: AISettingsData)
 
     const message = await anthropic.messages.create({
       model: settings.model_id,
-      max_completion_tokens: 2500,
+      max_tokens: 2500,
       messages: [
         { role: 'user', content: prompt }
       ],
@@ -191,6 +191,10 @@ async function analyzeQuestion(question: QuestionData, settings: AISettingsData)
     const completion = await openai.chat.completions.create({
       model: settings.model_id,
       messages: [
+        {
+          role: 'system',
+          content: 'You are an expert exam taker. You must respond with valid JSON only, no markdown or code blocks.'
+        },
         { role: 'user', content: prompt }
       ],
       max_completion_tokens: 2500,
@@ -205,11 +209,20 @@ async function analyzeQuestion(question: QuestionData, settings: AISettingsData)
 
   // Parse JSON response (handle potential markdown code blocks)
   let jsonText = responseText.trim();
+
+  console.log('📝 Raw AI Response (first 500 chars):', responseText.substring(0, 500));
+
   if (jsonText.startsWith('```json')) {
     jsonText = jsonText.replace(/^```json\n/, '').replace(/\n```$/, '');
   } else if (jsonText.startsWith('```')) {
     jsonText = jsonText.replace(/^```\n/, '').replace(/\n```$/, '');
   }
+
+  if (!jsonText || jsonText.length === 0) {
+    throw new Error('AI returned empty response');
+  }
+
+  console.log('🔍 Cleaned JSON (first 500 chars):', jsonText.substring(0, 500));
 
   const parsed: AIResponse = JSON.parse(jsonText);
 
