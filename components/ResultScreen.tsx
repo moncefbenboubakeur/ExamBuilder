@@ -1,6 +1,6 @@
 'use client';
 
-import { RotateCcw, XCircle } from 'lucide-react';
+import { RotateCcw, XCircle, Home } from 'lucide-react';
 import ExamStats from './ExamStats';
 
 interface ResultScreenProps {
@@ -34,7 +34,7 @@ export default function ResultScreen({
       <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
         <button
           onClick={onRetryAll}
-          className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+          className="flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-medium hover:bg-indigo-700 transition-all duration-200 shadow-sm hover:shadow-md"
         >
           <RotateCcw className="w-5 h-5" />
           Retry All Questions
@@ -43,7 +43,7 @@ export default function ResultScreen({
         {hasWrongAnswers && (
           <button
             onClick={onRetryWrong}
-            className="flex items-center justify-center gap-2 px-6 py-3 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-amber-600 text-white rounded-2xl font-medium hover:bg-amber-700 transition-all duration-200 shadow-sm hover:shadow-md"
           >
             <XCircle className="w-5 h-5" />
             Retry Wrong Answers Only
@@ -54,9 +54,10 @@ export default function ResultScreen({
       <div className="mt-6 text-center">
         <button
           onClick={() => window.location.href = '/'}
-          className="text-blue-600 hover:text-blue-700 underline text-sm"
+          className="inline-flex items-center gap-2 text-neutral-700 hover:text-indigo-600 font-medium transition-colors"
         >
-          Back to Dashboard
+          <Home className="w-4 h-4" />
+          Back to Home
         </button>
       </div>
     </div>
