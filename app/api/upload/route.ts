@@ -95,11 +95,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Trigger AI analysis asynchronously (don't block response)
+    if (data && data.length > 0) {
+      const questionIds = data.map(q => q.id);
+
+      // Fire and forget - don't await
+      fetch(`${request.nextUrl.origin}/api/ai/analyze-questions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // Forward auth cookie for server-side auth
+          'Cookie': request.headers.get('cookie') || ''
+        },
+        body: JSON.stringify({
+          questionIds,
+          examId: examData.id
+        })
+      }).catch(err => {
+        // Log but don't fail the upload
+        console.error('AI analysis trigger failed:', err);
+      });
+    }
+
     return NextResponse.json({
       success: true,
       exam: examData,
       count: questions.length,
       questions: data,
+      ai_analysis_queued: true,
     });
   } catch (error) {
     console.error('Upload error:', error);
