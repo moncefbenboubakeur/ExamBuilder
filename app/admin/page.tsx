@@ -7,12 +7,29 @@ import { AI_MODELS, AIModel } from '@/lib/ai-models';
 import { Shield, Bot, Check, DollarSign, Zap, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+export const dynamic = 'force-dynamic';
+
+interface AISettings {
+  id: string;
+  provider: string;
+  model_id: string;
+  model_name: string;
+  input_price_per_million: number;
+  output_price_per_million: number;
+  updated_at?: string;
+  updated_by?: string;
+}
+
+interface UserData {
+  email?: string;
+}
+
 export default function AdminPage() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [currentSettings, setCurrentSettings] = useState<any>(null);
+  const [currentSettings, setCurrentSettings] = useState<AISettings | null>(null);
   const [selectedModel, setSelectedModel] = useState<AIModel | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
@@ -20,6 +37,7 @@ export default function AdminPage() {
   useEffect(() => {
     checkAuth();
     fetchCurrentSettings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function checkAuth() {

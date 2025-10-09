@@ -1,15 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Question, AIAnalysis } from '@/lib/supabaseClient';
+import { Question } from '@/lib/supabaseClient';
 import {
   CheckCircle,
   XCircle,
   Eye,
   EyeOff,
-  Users,
   Bot,
-  MessageCircle,
   ChevronDown,
   ChevronUp,
   BookOpen,

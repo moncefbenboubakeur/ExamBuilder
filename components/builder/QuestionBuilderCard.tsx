@@ -5,21 +5,14 @@ import { GripVertical, Trash2, Eye, Edit3, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-
-interface Question {
-  id: string;
-  question_text: string;
-  options: Record<string, string>;
-  correct_answer: string;
-  has_illustration?: boolean;
-  community_vote?: string;
-}
+import { Question } from '@/lib/supabaseClient';
 
 interface QuestionBuilderCardProps {
   question: Question;
   index: number;
   onEdit?: (question: Question) => void;
   onDelete?: (questionId: string) => void;
+  onPreview?: (question: Question) => void;
   isDragging?: boolean;
 }
 

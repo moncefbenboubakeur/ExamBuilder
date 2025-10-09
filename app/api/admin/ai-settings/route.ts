@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import { requireAdmin } from '@/lib/admin';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const supabase = await createClient();
 
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     // Check admin permission
     try {
       requireAdmin(user.email);
-    } catch (error) {
+    } catch {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 

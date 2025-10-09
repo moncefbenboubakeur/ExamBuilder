@@ -77,8 +77,8 @@ export async function POST(request: NextRequest) {
 
     // Process questions in batches to avoid timeout
     const batchSize = 5;
-    const results = [];
-    const errors = [];
+    const results: AnalysisResult[] = [];
+    const errors: Array<{ questionId: string; error: string }> = [];
 
     for (let i = 0; i < questions.length; i += batchSize) {
       const batch = questions.slice(i, i + batchSize);
@@ -137,7 +137,30 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function analyzeQuestion(question: any, settings: any): Promise<any> {
+interface QuestionData {
+  id: string;
+  question_text: string;
+  options: Record<string, string>;
+  correct_answer?: string;
+}
+
+interface AISettingsData {
+  provider: string;
+  model_id: string;
+  model_name: string;
+}
+
+interface AnalysisResult {
+  question_id: string;
+  recommended_answer: string;
+  confidence_score: number;
+  option_short_explanations: Record<string, string>;
+  option_long_explanations: Record<string, string>;
+  reasoning_summary: string;
+  reasoning_detailed: string;
+}
+
+async function analyzeQuestion(question: QuestionData, settings: AISettingsData): Promise<AnalysisResult> {
   const prompt = buildPrompt(question);
 
   let responseText = '';
@@ -210,7 +233,7 @@ async function analyzeQuestion(question: any, settings: any): Promise<any> {
   };
 }
 
-function buildPrompt(question: any): string {
+function buildPrompt(question: QuestionData): string {
   return `You are an expert taking an exam. Solve this question using your knowledge.
 
 IMPORTANT: Do NOT assume any answer is correct. Analyze the question independently and determine the BEST answer based on your expertise.
