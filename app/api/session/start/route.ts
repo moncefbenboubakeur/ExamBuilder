@@ -17,6 +17,25 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { questionIds, examId } = body;
 
+    // Check if there's already an incomplete session for this exam
+    const { data: existingSession } = await supabase
+      .from('exam_sessions')
+      .select('*')
+      .eq('exam_id', examId)
+      .eq('user_id', user.id)
+      .eq('completed', false)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    // If an incomplete session exists, return it instead of creating a new one
+    if (existingSession) {
+      return NextResponse.json({
+        success: true,
+        session: existingSession,
+      });
+    }
+
     // Create a new exam session
     const { data: session, error: sessionError } = await supabase
       .from('exam_sessions')

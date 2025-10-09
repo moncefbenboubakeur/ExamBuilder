@@ -44,6 +44,16 @@ export default function QuestionCard({
     ? question.ai_analysis[0]
     : question.ai_analysis;
 
+  // Debug logging
+  useEffect(() => {
+    console.log('🔍 Question AI Analysis:', {
+      hasAiAnalysis: !!aiAnalysis,
+      aiAnalysisType: typeof aiAnalysis,
+      aiAnalysisValue: aiAnalysis,
+      rawQuestionData: question.ai_analysis
+    });
+  }, [aiAnalysis, question.ai_analysis]);
+
   // Reset revealed state when question changes
   useEffect(() => {
     setRevealed(false);

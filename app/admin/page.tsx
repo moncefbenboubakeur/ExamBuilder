@@ -91,17 +91,21 @@ export default function AdminPage() {
   }
 
   async function handleReanalyzeExam(examId: string) {
+    console.log('🔍 Starting re-analysis for exam:', examId);
     setReanalyzing(examId);
     setMessage(null);
 
     try {
+      console.log('📡 Sending request to /api/admin/reanalyze-exam');
       const response = await fetch('/api/admin/reanalyze-exam', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ examId }),
       });
 
+      console.log('📨 Response status:', response.status);
       const data = await response.json();
+      console.log('📊 Response data:', data);
 
       if (data.success) {
         setMessage({
@@ -112,8 +116,8 @@ export default function AdminPage() {
         setMessage({ type: 'error', text: data.error || 'Failed to analyze exam' });
       }
     } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to trigger analysis' });
-      console.error('Reanalyze error:', error);
+      console.error('❌ Reanalyze error:', error);
+      setMessage({ type: 'error', text: `Failed: ${error instanceof Error ? error.message : String(error)}` });
     } finally {
       setReanalyzing(null);
     }

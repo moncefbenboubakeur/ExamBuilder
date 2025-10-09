@@ -47,6 +47,12 @@ function ExamContent() {
       const response = await fetch(url);
       const data = await response.json();
 
+      console.log('📊 Fetched questions:', {
+        count: data.questions?.length,
+        firstQuestion: data.questions?.[0],
+        hasAiAnalysis: data.questions?.[0]?.ai_analysis,
+      });
+
       if (data.questions && data.questions.length > 0) {
         setQuestions(data.questions);
 
@@ -103,7 +109,8 @@ function ExamContent() {
     };
 
     checkAuth();
-  }, [router, initialized, initializeExam]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const isMultipleChoice = (question: Question) => {
     return question.correct_answer.includes(',');
