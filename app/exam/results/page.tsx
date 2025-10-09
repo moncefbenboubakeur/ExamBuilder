@@ -117,7 +117,7 @@ function ResultsContent() {
   }
 
   return (
-    <div className="bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4">
+    <div className="py-12 px-4">
       <ResultScreen
         totalQuestions={results.totalQuestions}
         correctCount={results.correctCount}
