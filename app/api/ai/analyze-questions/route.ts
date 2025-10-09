@@ -193,7 +193,7 @@ async function analyzeQuestion(question: QuestionData, settings: AISettingsData)
       messages: [
         { role: 'user', content: prompt }
       ],
-      max_tokens: 2500,
+      max_completion_tokens: 2500,
       response_format: { type: 'json_object' },
     });
 
