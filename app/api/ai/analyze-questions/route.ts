@@ -173,7 +173,7 @@ async function analyzeQuestion(question: QuestionData, settings: AISettingsData)
 
     const message = await anthropic.messages.create({
       model: settings.model_id,
-      max_completion_tokens: 2500,
+      max_tokens: 2500,
       messages: [
         { role: 'user', content: prompt }
       ],
