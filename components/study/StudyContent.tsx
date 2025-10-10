@@ -53,7 +53,7 @@ export default function StudyContent({
     <div
       {...handlers}
       className={`
-        flex-1 overflow-y-auto bg-gray-800 dark:bg-gray-800
+        flex-1 overflow-y-auto bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950
         relative transition-transform duration-150
         ${swipeDirection === 'left' ? '-translate-x-2' : ''}
         ${swipeDirection === 'right' ? 'translate-x-2' : ''}
@@ -84,11 +84,13 @@ export default function StudyContent({
         </div>
       )}
 
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        <div className={`${markdownClassName} study-content-mobile`}>
-          <ReactMarkdown {...markdownOptions}>
-            {content}
-          </ReactMarkdown>
+      <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-6 sm:py-8">
+        <div className="bg-gray-800/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl shadow-2xl border border-gray-700/50 dark:border-gray-800/50 p-6 sm:p-8 lg:p-10 xl:p-12 2xl:p-16">
+          <div className={`${markdownClassName} study-content-mobile prose-wide w-full`}>
+            <ReactMarkdown {...markdownOptions}>
+              {content}
+            </ReactMarkdown>
+          </div>
         </div>
       </div>
     </div>

@@ -66,7 +66,7 @@ export default function StudyPage({ params }: { params: Promise<{ exam_id: strin
     loadCourse();
   }, [examId]);
 
-  const handleGenerateCourse = async () => {
+  const handleGenerateCourse = async (force = false) => {
     if (!examId) return;
 
     setGenerating(true);
@@ -76,7 +76,7 @@ export default function StudyPage({ params }: { params: Promise<{ exam_id: strin
       const response = await fetch('/api/generate-course', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ exam_id: examId })
+        body: JSON.stringify({ exam_id: examId, force })
       });
 
       if (!response.ok) {
@@ -156,7 +156,7 @@ export default function StudyPage({ params }: { params: Promise<{ exam_id: strin
             This exam doesn&apos;t have a study course yet. Generate one to get started!
           </p>
           <button
-            onClick={handleGenerateCourse}
+            onClick={() => handleGenerateCourse()}
             disabled={generating}
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-2"
           >
@@ -227,6 +227,7 @@ export default function StudyPage({ params }: { params: Promise<{ exam_id: strin
           onTopicSelect={handleTopicSelect}
           isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
+          totalQuestions={courseData.total_questions}
         />
         <div className="flex-1 flex flex-col overflow-hidden">
           <StudyContent

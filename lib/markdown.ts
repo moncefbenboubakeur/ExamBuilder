@@ -15,4 +15,4 @@ export const markdownOptions: Partial<Options> = {
  * Custom className for markdown content styling
  * Uses custom prose styles defined in globals.css with proper contrast ratios
  */
-export const markdownClassName = 'prose max-w-none';
+export const markdownClassName = 'prose max-w-full';
