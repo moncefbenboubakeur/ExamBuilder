@@ -41,6 +41,19 @@ export async function GET() {
       );
     }
 
+    // Enrich shares with email addresses
+    const enrichedSharesGiven = await Promise.all(
+      (sharesGiven || []).map(async (share) => {
+        const { data: email } = await supabase.rpc('get_email_by_user_id', {
+          user_id: share.shared_with,
+        });
+        return {
+          ...share,
+          shared_with_email: email || share.shared_with,
+        };
+      })
+    );
+
     // Get shares where user is the recipient
     const { data: sharesReceived, error: sharesReceivedError } = await supabase
       .from('exam_shares')
@@ -67,10 +80,23 @@ export async function GET() {
       );
     }
 
+    // Enrich received shares with sharer email addresses
+    const enrichedSharesReceived = await Promise.all(
+      (sharesReceived || []).map(async (share) => {
+        const { data: email } = await supabase.rpc('get_email_by_user_id', {
+          user_id: share.shared_by,
+        });
+        return {
+          ...share,
+          shared_by_email: email || share.shared_by,
+        };
+      })
+    );
+
     return NextResponse.json({
       success: true,
-      sharesGiven: sharesGiven || [],
-      sharesReceived: sharesReceived || [],
+      sharesGiven: enrichedSharesGiven,
+      sharesReceived: enrichedSharesReceived,
     });
   } catch (error) {
     console.error('Error fetching shares:', error);

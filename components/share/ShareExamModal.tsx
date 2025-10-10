@@ -14,6 +14,7 @@ interface ShareExamModalProps {
 interface ShareRecord {
   id: string;
   shared_with: string;
+  shared_with_email?: string;
   created_at: string;
 }
 
@@ -212,7 +213,7 @@ export default function ShareExamModal({
                   >
                     <div className="flex items-center gap-2">
                       <Mail className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm text-gray-700">{share.shared_with}</span>
+                      <span className="text-sm text-gray-700">{share.shared_with_email || share.shared_with}</span>
                     </div>
                     <button
                       onClick={() => handleUnshare(share.id)}
