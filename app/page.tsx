@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import FileUpload from '@/components/FileUpload';
-import { BookOpen, Play, History, FileText, Star, Hash, Plus, Sparkles, Share2, Users } from 'lucide-react';
+import { BookOpen, Play, History, FileText, Star, Hash, Plus, Sparkles, Share2, Users, GraduationCap } from 'lucide-react';
 import { supabase, Exam, ExamWithSharing } from '@/lib/supabaseClient';
 import { cn } from '@/lib/utils';
 import ShareExamModal from '@/components/share/ShareExamModal';
@@ -63,6 +63,10 @@ export default function Home() {
 
   const handleStartExam = (examId: string) => {
     router.push(`/exam?exam_id=${examId}`);
+  };
+
+  const handleStudyMode = (examId: string) => {
+    router.push(`/study/${examId}`);
   };
 
   const handleViewHistory = () => {
@@ -238,19 +242,34 @@ export default function Home() {
                     )}
                   </div>
 
-                  <button
-                    onClick={() => handleStartExam(exam.id)}
-                    disabled={!exam.question_count || exam.question_count === 0}
-                    className={cn(
-                      'w-full flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-medium transition-all duration-200',
-                      exam.question_count && exam.question_count > 0
-                        ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm hover:shadow-md'
-                        : 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
-                    )}
-                  >
-                    <Play className="w-5 h-5" />
-                    Start Exam
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleStudyMode(exam.id)}
+                      disabled={!exam.question_count || exam.question_count === 0}
+                      className={cn(
+                        'flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-2xl font-medium transition-all duration-200',
+                        exam.question_count && exam.question_count > 0
+                          ? 'bg-white border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50'
+                          : 'bg-neutral-200 text-neutral-400 cursor-not-allowed border-2 border-transparent'
+                      )}
+                    >
+                      <GraduationCap className="w-5 h-5" />
+                      Study
+                    </button>
+                    <button
+                      onClick={() => handleStartExam(exam.id)}
+                      disabled={!exam.question_count || exam.question_count === 0}
+                      className={cn(
+                        'flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-2xl font-medium transition-all duration-200',
+                        exam.question_count && exam.question_count > 0
+                          ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm hover:shadow-md'
+                          : 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
+                      )}
+                    >
+                      <Play className="w-5 h-5" />
+                      Take Exam
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
