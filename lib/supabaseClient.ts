@@ -70,3 +70,16 @@ export type ExamAnswer = {
   is_correct: boolean;
   created_at: string;
 };
+
+export type ExamShare = {
+  id: string;
+  exam_id: string;
+  shared_by: string;
+  shared_with: string;
+  created_at: string;
+};
+
+export type ExamWithSharing = Exam & {
+  is_shared_with_me?: boolean;
+  shared_by_email?: string;
+};

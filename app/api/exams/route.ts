@@ -14,12 +14,18 @@ export async function GET() {
       );
     }
 
-    // Get all exams for the user (their own exams + sample exams)
+    // Get all exams for the user (their own exams + sample exams + shared exams)
+    // The RLS policy already handles this - it includes shared exams automatically
     const { data: exams, error } = await supabase
       .from('exams')
       .select(`
         *,
-        questions:questions(count)
+        questions:questions(count),
+        exam_shares!exam_shares_exam_id_fkey(
+          id,
+          shared_by,
+          shared_with
+        )
       `)
       .order('is_sample', { ascending: false })
       .order('created_at', { ascending: false });
@@ -32,12 +38,21 @@ export async function GET() {
       );
     }
 
-    // Transform the data to include question_count
-    const examsWithCount = exams.map((exam) => ({
-      ...exam,
-      question_count: exam.questions?.[0]?.count || 0,
-      questions: undefined, // Remove the nested questions object
-    }));
+    // Transform the data to include question_count and sharing info
+    const examsWithCount = exams.map((exam) => {
+      // Check if this exam is shared with the current user
+      const sharedWithMe = exam.exam_shares?.some(
+        (share: { shared_with: string }) => share.shared_with === user.id
+      );
+
+      return {
+        ...exam,
+        question_count: exam.questions?.[0]?.count || 0,
+        is_shared_with_me: sharedWithMe,
+        questions: undefined, // Remove the nested questions object
+        exam_shares: undefined, // Remove the shares object from response
+      };
+    });
 
     return NextResponse.json({
       success: true,

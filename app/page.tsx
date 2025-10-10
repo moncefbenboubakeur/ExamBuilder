@@ -3,16 +3,19 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import FileUpload from '@/components/FileUpload';
-import { BookOpen, Play, History, FileText, Star, Hash, Plus, Sparkles } from 'lucide-react';
-import { supabase, Exam } from '@/lib/supabaseClient';
+import { BookOpen, Play, History, FileText, Star, Hash, Plus, Sparkles, Share2, Users } from 'lucide-react';
+import { supabase, Exam, ExamWithSharing } from '@/lib/supabaseClient';
 import { cn } from '@/lib/utils';
+import ShareExamModal from '@/components/share/ShareExamModal';
 
 export default function Home() {
   const router = useRouter();
-  const [exams, setExams] = useState<Exam[]>([]);
+  const [exams, setExams] = useState<ExamWithSharing[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [selectedExam, setSelectedExam] = useState<{ id: string; name: string } | null>(null);
 
   const fetchExams = useCallback(async () => {
     try {
@@ -64,6 +67,16 @@ export default function Home() {
 
   const handleViewHistory = () => {
     router.push('/dashboard');
+  };
+
+  const handleShareExam = (examId: string, examName: string) => {
+    setSelectedExam({ id: examId, name: examName });
+    setShareModalOpen(true);
+  };
+
+  const handleShareSuccess = () => {
+    // Optionally refetch exams or show a notification
+    fetchExams();
   };
 
   if (!authChecked || !user) {
@@ -174,7 +187,7 @@ export default function Home() {
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
                         <h3 className="text-lg sm:text-xl font-bold text-neutral-900 line-clamp-1">
                           {exam.name}
                         </h3>
@@ -184,6 +197,12 @@ export default function Home() {
                             Sample
                           </span>
                         )}
+                        {exam.is_shared_with_me && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full flex-shrink-0">
+                            <Users className="w-3 h-3" />
+                            Shared
+                          </span>
+                        )}
                       </div>
                       {exam.description && (
                         <p className="text-sm text-neutral-600 mb-3 line-clamp-2">
@@ -191,6 +210,19 @@ export default function Home() {
                         </p>
                       )}
                     </div>
+                    {/* Share button - only for owned exams */}
+                    {user && exam.user_id === user.id && !exam.is_sample && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleShareExam(exam.id, exam.name);
+                        }}
+                        className="ml-2 p-2 text-neutral-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                        title="Share this exam"
+                      >
+                        <Share2 className="w-5 h-5" />
+                      </button>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-4 mb-4 text-sm text-neutral-600">
@@ -256,6 +288,20 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Share Modal */}
+      {selectedExam && (
+        <ShareExamModal
+          examId={selectedExam.id}
+          examName={selectedExam.name}
+          isOpen={shareModalOpen}
+          onClose={() => {
+            setShareModalOpen(false);
+            setSelectedExam(null);
+          }}
+          onShareSuccess={handleShareSuccess}
+        />
+      )}
     </div>
   );
 }
