@@ -1,14 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
-import { loadCourse } from '@/lib/course/load';
 
-export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ exam_id: string }> }
-) {
+export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { exam_id } = await context.params;
 
     // Check authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -16,8 +11,16 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!exam_id) {
-      return NextResponse.json({ error: 'Missing exam_id' }, { status: 400 });
+    // Parse request body
+    const body = await request.json();
+    const { exam_id, topic_name, completed } = body;
+
+    // Validate required fields
+    if (!exam_id || !topic_name) {
+      return NextResponse.json({
+        error: 'Missing required fields',
+        required: ['exam_id', 'topic_name']
+      }, { status: 400 });
     }
 
     // Verify exam exists and user has access
@@ -46,26 +49,41 @@ export async function GET(
     const isShared = !!sharedExam;
 
     if (!isOwner && !isSample && !isShared) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+      return NextResponse.json({ error: 'Unauthorized access to this exam' }, { status: 403 });
     }
 
-    // Load course data with progress
-    const courseData = await loadCourse(supabase, exam_id, user.id);
-
-    if (!courseData) {
-      return NextResponse.json({
-        error: 'No course found for this exam',
+    // Upsert study progress
+    const { data: progress, error: progressError } = await supabase
+      .from('study_progress')
+      .upsert({
+        user_id: user.id,
         exam_id,
-        status: 'not_generated'
-      }, { status: 404 });
+        topic_name,
+        completed: completed ?? false,
+        last_visited_at: new Date().toISOString()
+      }, {
+        onConflict: 'user_id,exam_id,topic_name'
+      })
+      .select()
+      .single();
+
+    if (progressError) {
+      console.error('Failed to save study progress:', progressError);
+      return NextResponse.json({
+        error: 'Failed to save progress',
+        details: progressError.message
+      }, { status: 500 });
     }
 
-    return NextResponse.json(courseData);
+    return NextResponse.json({
+      success: true,
+      data: progress
+    });
 
   } catch (error) {
-    console.error('Failed to load course:', error);
+    console.error('Failed to process study progress:', error);
     return NextResponse.json({
-      error: 'Failed to load course',
+      error: 'Internal server error',
       details: error instanceof Error ? error.message : String(error)
     }, { status: 500 });
   }

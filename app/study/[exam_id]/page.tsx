@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Loader2, BookOpen } from 'lucide-react';
+import { ArrowLeft, Loader2, BookOpen, Menu } from 'lucide-react';
 import StudySidebar from '@/components/study/StudySidebar';
 import StudyContent from '@/components/study/StudyContent';
 import StudyNav from '@/components/study/StudyNav';
@@ -16,6 +16,7 @@ export default function StudyPage({ params }: { params: Promise<{ exam_id: strin
   const [error, setError] = useState<string | null>(null);
   const [currentTopicIndex, setCurrentTopicIndex] = useState(0);
   const [generating, setGenerating] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (!examId) return;
@@ -152,7 +153,7 @@ export default function StudyPage({ params }: { params: Promise<{ exam_id: strin
             No Study Course Available
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            This exam doesn't have a study course yet. Generate one to get started!
+            This exam doesn&apos;t have a study course yet. Generate one to get started!
           </p>
           <button
             onClick={handleGenerateCourse}
@@ -186,21 +187,35 @@ export default function StudyPage({ params }: { params: Promise<{ exam_id: strin
   const currentSection = courseData.sections[currentTopicIndex];
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen flex flex-col bg-gray-950">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+      <header className="bg-gray-900 border-b border-gray-700 px-4 sm:px-6 py-4 sticky top-0 z-30">
         <div className="flex items-center justify-between">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>Back to Exam</span>
-          </button>
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+          <div className="flex items-center gap-2">
+            {/* Hamburger menu button - visible only on mobile */}
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="md:hidden p-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-400 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center"
+              aria-label="Open study topics menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+
+            <button
+              onClick={() => router.back()}
+              className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors min-h-[44px]"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span className="hidden sm:inline">Back to Exam</span>
+              <span className="sm:hidden">Back</span>
+            </button>
+          </div>
+
+          <h1 className="text-lg sm:text-xl font-semibold text-white">
             Study Mode
           </h1>
-          <div className="w-32" /> {/* Spacer for centering */}
+
+          <div className="w-[44px] md:w-32" /> {/* Spacer for centering */}
         </div>
       </header>
 
@@ -210,11 +225,17 @@ export default function StudyPage({ params }: { params: Promise<{ exam_id: strin
           topics={courseData.topics}
           currentTopicIndex={currentTopicIndex}
           onTopicSelect={handleTopicSelect}
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
         />
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col overflow-hidden">
           <StudyContent
             content={currentSection.content_md}
             topicName={currentSection.topic_name}
+            onPrevious={handlePrevious}
+            onNext={handleNext}
+            hasPrevious={currentTopicIndex > 0}
+            hasNext={currentTopicIndex < courseData.topics.length - 1}
           />
           <StudyNav
             currentIndex={currentTopicIndex}

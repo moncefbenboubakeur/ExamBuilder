@@ -47,19 +47,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get target user by email
-    // Note: We need to query auth.users which requires RPC or admin access
-    // For now, we'll use a workaround by checking if they have any exams
-    const { data: targetUserExams } = await supabase
-      .from('exams')
-      .select('user_id')
-      .limit(1);
-
-    // Better approach: Use Supabase Edge Function or create a custom RPC
-    // For now, let's try to get user from public profiles if it exists,
-    // otherwise we need to handle this differently
-
-    // Create a function to get user by email (requires database function)
+    // Get target user by email using database function
     const { data: targetUserData, error: targetUserError } = await supabase
       .rpc('get_user_id_by_email', { email: targetUserEmail });
 

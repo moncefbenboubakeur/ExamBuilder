@@ -83,3 +83,23 @@ export type ExamWithSharing = Exam & {
   is_shared_with_me?: boolean;
   shared_by_email?: string;
 };
+
+export type StudyProgress = {
+  id: string;
+  user_id: string;
+  exam_id: string;
+  topic_name: string;
+  completed: boolean;
+  last_visited_at: string;
+  created_at: string;
+};
+
+export type StudyProgressStatistics = {
+  total_topics: number;
+  completed_topics: number;
+  completion_percentage: number;
+  last_visited_topic: {
+    topic_name: string;
+    visited_at: string;
+  } | null;
+};

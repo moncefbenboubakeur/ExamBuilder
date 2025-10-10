@@ -44,12 +44,30 @@ export async function GET() {
     // Enrich shares with email addresses
     const enrichedSharesGiven = await Promise.all(
       (sharesGiven || []).map(async (share) => {
-        const { data: email } = await supabase.rpc('get_email_by_user_id', {
+        // Try to get email using RPC function
+        const { data: email, error: rpcError } = await supabase.rpc('get_email_by_user_id', {
           user_id: share.shared_with,
         });
+
+        if (rpcError) {
+          console.error('RPC error getting email:', rpcError);
+        }
+
+        console.log('Email for user', share.shared_with, ':', email);
+
+        // Fallback: try to get email directly from auth.users (as admin)
+        let finalEmail = email;
+        if (!finalEmail) {
+          const { data: userData, error: userError } = await supabase.auth.admin.getUserById(share.shared_with);
+          if (!userError && userData?.user?.email) {
+            finalEmail = userData.user.email;
+            console.log('Got email from admin API:', finalEmail);
+          }
+        }
+
         return {
           ...share,
-          shared_with_email: email || share.shared_with,
+          shared_with_email: finalEmail || share.shared_with,
         };
       })
     );

@@ -46,7 +46,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Exam not found' }, { status: 404 });
     }
 
-    if (exam.user_id !== user.id && !exam.is_sample) {
+    // Check if user has access (owns it, it's a sample, or it's shared with them)
+    const isOwner = exam.user_id === user.id;
+    const isSample = exam.is_sample;
+
+    // Check if exam is shared with user
+    const { data: sharedExam } = await supabase
+      .from('exam_shares')
+      .select('id')
+      .eq('exam_id', exam_id)
+      .eq('shared_with', user.id)
+      .maybeSingle();
+
+    const isShared = !!sharedExam;
+
+    if (!isOwner && !isSample && !isShared) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 

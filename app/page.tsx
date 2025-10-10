@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import FileUpload from '@/components/FileUpload';
 import { BookOpen, Play, History, FileText, Star, Hash, Plus, Sparkles, Share2, Users, GraduationCap } from 'lucide-react';
-import { supabase, Exam, ExamWithSharing } from '@/lib/supabaseClient';
+import { supabase, ExamWithSharing } from '@/lib/supabaseClient';
 import { cn } from '@/lib/utils';
 import ShareExamModal from '@/components/share/ShareExamModal';
 

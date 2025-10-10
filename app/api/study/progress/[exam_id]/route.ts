@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
-import { loadCourse } from '@/lib/course/load';
 
 export async function GET(
   request: NextRequest,
@@ -46,26 +45,51 @@ export async function GET(
     const isShared = !!sharedExam;
 
     if (!isOwner && !isSample && !isShared) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+      return NextResponse.json({ error: 'Unauthorized access to this exam' }, { status: 403 });
     }
 
-    // Load course data with progress
-    const courseData = await loadCourse(supabase, exam_id, user.id);
+    // Fetch study progress for this exam
+    const { data: progress, error: progressError } = await supabase
+      .from('study_progress')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('exam_id', exam_id)
+      .order('last_visited_at', { ascending: false });
 
-    if (!courseData) {
+    if (progressError) {
+      console.error('Failed to fetch study progress:', progressError);
       return NextResponse.json({
-        error: 'No course found for this exam',
-        exam_id,
-        status: 'not_generated'
-      }, { status: 404 });
+        error: 'Failed to fetch progress',
+        details: progressError.message
+      }, { status: 500 });
     }
 
-    return NextResponse.json(courseData);
+    // Calculate progress statistics
+    const totalTopics = progress.length;
+    const completedTopics = progress.filter(p => p.completed).length;
+    const completionPercentage = totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
+
+    // Find last visited topic
+    const lastVisited = progress.length > 0 ? progress[0] : null;
+
+    return NextResponse.json({
+      exam_id,
+      progress: progress || [],
+      statistics: {
+        total_topics: totalTopics,
+        completed_topics: completedTopics,
+        completion_percentage: completionPercentage,
+        last_visited_topic: lastVisited ? {
+          topic_name: lastVisited.topic_name,
+          visited_at: lastVisited.last_visited_at
+        } : null
+      }
+    });
 
   } catch (error) {
-    console.error('Failed to load course:', error);
+    console.error('Failed to load study progress:', error);
     return NextResponse.json({
-      error: 'Failed to load course',
+      error: 'Internal server error',
       details: error instanceof Error ? error.message : String(error)
     }, { status: 500 });
   }

@@ -83,7 +83,7 @@ export function sanitizeLessonContent(
   lessonContent: string,
   examQuestions: Array<{ question_text: string }>
 ): string {
-  let sanitized = lessonContent;
+  const sanitized = lessonContent;
 
   // Remove any lines that are too similar to exam questions
   const lines = sanitized.split('\n');
