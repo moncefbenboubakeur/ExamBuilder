@@ -10,6 +10,7 @@ interface StudySidebarProps {
   onTopicSelect: (index: number) => void;
   isOpen?: boolean;
   onClose?: () => void;
+  totalQuestions?: number;
 }
 
 export default function StudySidebar({
@@ -17,7 +18,8 @@ export default function StudySidebar({
   currentTopicIndex,
   onTopicSelect,
   isOpen = true,
-  onClose
+  onClose,
+  totalQuestions
 }: StudySidebarProps) {
   // Prevent body scroll when mobile sidebar is open
   useEffect(() => {
@@ -104,11 +106,18 @@ export default function StudySidebar({
                   `}
                   aria-current={currentTopicIndex === index ? 'page' : undefined}
                 >
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-gray-400 min-w-[1.5rem]">
+                  <div className="flex items-start gap-2">
+                    <span className="text-xs font-semibold text-gray-400 min-w-[1.5rem] mt-0.5">
                       {index + 1}
                     </span>
-                    <span className="flex-1 text-sm leading-snug">{topic.topic_name}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm leading-snug">{topic.topic_name}</div>
+                      {topic.question_count !== undefined && totalQuestions !== undefined && (
+                        <div className="text-xs text-gray-500 mt-0.5">
+                          {topic.question_count}/{totalQuestions} questions
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </button>
               </li>

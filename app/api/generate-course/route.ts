@@ -14,7 +14,7 @@ import {
 import { upsertTopics, upsertCourseSections, checkCourseExists } from '@/lib/course/persist';
 import { detectExamLeakage } from '@/lib/course/leakageDetection';
 
-const REGEN_WINDOW_MINUTES = 10;
+const REGEN_WINDOW_MINUTES = process.env.NODE_ENV === 'production' ? 1 : 0;
 const TOPIC_DETECTION_TIMEOUT = 20000; // 20 seconds
 const LESSON_GENERATION_TIMEOUT = 30000; // 30 seconds per lesson
 
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { exam_id } = body;
+    const { exam_id, force = false } = body;
 
     if (!exam_id) {
       return NextResponse.json({ error: 'Missing exam_id' }, { status: 400 });
@@ -65,13 +65,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if course already exists (idempotent protection)
-    const exists = await checkCourseExists(supabase, exam_id, REGEN_WINDOW_MINUTES);
-    if (exists) {
-      return NextResponse.json({
-        message: 'Course already exists for this exam',
-        exam_id,
-        status: 'exists'
-      });
+    // Skip check if force=true
+    if (!force) {
+      const exists = await checkCourseExists(supabase, exam_id, REGEN_WINDOW_MINUTES);
+      if (exists) {
+        return NextResponse.json({
+          message: 'Course already exists for this exam',
+          exam_id,
+          status: 'exists'
+        });
+      }
     }
 
     // Get AI settings
@@ -133,7 +136,8 @@ export async function POST(request: NextRequest) {
     );
 
     const topicResponse = parseJSONResponse(topicResponseText);
-    const validatedTopics = validateTopicDetectionResponse(topicResponse);
+    const expectedQuestionIds = questions.map(q => q.id);
+    const validatedTopics = validateTopicDetectionResponse(topicResponse, expectedQuestionIds);
 
     console.log(`✅ Detected ${validatedTopics.topics.length} topics`);
 

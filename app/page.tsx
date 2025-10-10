@@ -186,10 +186,11 @@ export default function Home() {
                   className={cn(
                     'bg-white rounded-xl border-2 border-neutral-200 p-6',
                     'hover:border-indigo-300 hover:shadow-md transition-all duration-200',
-                    'group'
+                    'group grid grid-rows-[auto_minmax(3rem,auto)_auto_auto] gap-3'
                   )}
                 >
-                  <div className="flex items-start justify-between mb-4">
+                  {/* Row 1: Title, Badges, and Share Button - auto height with min-height */}
+                  <div className="flex items-start justify-between min-h-[3rem]">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2 flex-wrap">
                         <h3 className="text-lg sm:text-xl font-bold text-neutral-900 line-clamp-1">
@@ -208,11 +209,6 @@ export default function Home() {
                           </span>
                         )}
                       </div>
-                      {exam.description && (
-                        <p className="text-sm text-neutral-600 mb-3 line-clamp-2">
-                          {exam.description}
-                        </p>
-                      )}
                     </div>
                     {/* Share button - only for owned exams */}
                     {user && exam.user_id === user.id && !exam.is_sample && (
@@ -229,7 +225,19 @@ export default function Home() {
                     )}
                   </div>
 
-                  <div className="flex items-center gap-4 mb-4 text-sm text-neutral-600">
+                  {/* Row 2: Description - fixed height with line-clamp */}
+                  <div className="min-h-[3rem]">
+                    {exam.description ? (
+                      <p className="text-sm text-neutral-600 line-clamp-2">
+                        {exam.description}
+                      </p>
+                    ) : (
+                      <div className="h-[3rem]"></div>
+                    )}
+                  </div>
+
+                  {/* Row 3: Metadata - auto height */}
+                  <div className="flex items-center gap-4 text-sm text-neutral-600">
                     <div className="flex items-center gap-1">
                       <Hash className="w-4 h-4" />
                       <span>{exam.question_count || 0} questions</span>
@@ -242,6 +250,7 @@ export default function Home() {
                     )}
                   </div>
 
+                  {/* Row 4: Action Buttons - always at bottom, aligned across all cards */}
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleStudyMode(exam.id)}

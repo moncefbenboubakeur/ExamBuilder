@@ -5,6 +5,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 export interface TopicData {
   topic_name: string;
   order_index: number;
+  question_count?: number;
 }
 
 export interface SectionData {
@@ -24,6 +25,7 @@ export interface CourseData {
   topics: TopicData[];
   sections: SectionData[];
   progress?: TopicProgress[];
+  total_questions?: number;
   statistics?: {
     total_topics: number;
     completed_topics: number;
@@ -103,11 +105,36 @@ export async function loadCourse(
     return null; // No course generated yet
   }
 
-  // Extract topics from sections (they're already ordered)
+  // Load detected topics to get question counts
+  const { data: detectedTopics, error: topicsError } = await supabase
+    .from('ai_detected_topics')
+    .select('topic_name, question_ids')
+    .eq('exam_id', examId);
+
+  if (topicsError) {
+    console.error('Failed to load detected topics:', topicsError);
+  }
+
+  // Create a map of topic_name -> question_count
+  const questionCountMap = new Map<string, number>();
+  if (detectedTopics) {
+    for (const topic of detectedTopics) {
+      const questionIds = Array.isArray(topic.question_ids)
+        ? topic.question_ids
+        : [];
+      questionCountMap.set(topic.topic_name, questionIds.length);
+    }
+  }
+
+  // Extract topics from sections (they're already ordered) with question counts
   const topics: TopicData[] = sections.map(s => ({
     topic_name: s.topic_name,
-    order_index: s.order_index
+    order_index: s.order_index,
+    question_count: questionCountMap.get(s.topic_name) || 0
   }));
+
+  // Calculate total questions across all topics
+  const totalQuestions = topics.reduce((sum, topic) => sum + (topic.question_count || 0), 0);
 
   // Load progress if userId is provided
   let progressData: TopicProgress[] | undefined;
@@ -124,6 +151,7 @@ export async function loadCourse(
     topics,
     sections: sections as SectionData[],
     progress: progressData,
+    total_questions: totalQuestions,
     statistics
   };
 }

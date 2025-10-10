@@ -64,7 +64,10 @@ IMPORTANT: Respond with ONLY valid JSON, no markdown code blocks, no explanation
 }`;
 }
 
-export function validateTopicDetectionResponse(data: unknown): TopicDetectionResponse {
+export function validateTopicDetectionResponse(
+  data: unknown,
+  expectedQuestionIds: string[]
+): TopicDetectionResponse {
   if (!data || typeof data !== 'object') {
     throw new Error('Invalid response: expected object');
   }
@@ -80,6 +83,8 @@ export function validateTopicDetectionResponse(data: unknown): TopicDetectionRes
   }
 
   const validatedTopics: DetectedTopic[] = [];
+  const assignedQuestionIds = new Set<string>();
+  const duplicateQuestionIds = new Set<string>();
 
   for (const topic of response.topics) {
     if (!topic || typeof topic !== 'object') {
@@ -108,12 +113,42 @@ export function validateTopicDetectionResponse(data: unknown): TopicDetectionRes
       throw new Error(`Invalid topic "${t.name}": concepts must be strings`);
     }
 
+    // Track assigned questions and detect duplicates
+    for (const qid of t.question_ids as string[]) {
+      if (assignedQuestionIds.has(qid)) {
+        duplicateQuestionIds.add(qid);
+      }
+      assignedQuestionIds.add(qid);
+    }
+
     validatedTopics.push({
       name: t.name,
       question_ids: t.question_ids as string[],
       concepts: t.concepts as string[]
     });
   }
+
+  // Check for duplicates
+  if (duplicateQuestionIds.size > 0) {
+    throw new Error(
+      `Duplicate question assignments found: ${duplicateQuestionIds.size} questions assigned to multiple topics`
+    );
+  }
+
+  // Check for missing questions
+  const missingQuestionIds = expectedQuestionIds.filter(
+    id => !assignedQuestionIds.has(id)
+  );
+
+  if (missingQuestionIds.length > 0) {
+    const coverage = ((assignedQuestionIds.size / expectedQuestionIds.length) * 100).toFixed(1);
+    throw new Error(
+      `Incomplete question coverage: ${assignedQuestionIds.size}/${expectedQuestionIds.length} questions assigned (${coverage}%). ` +
+      `Missing ${missingQuestionIds.length} questions. First 5 missing: ${missingQuestionIds.slice(0, 5).join(', ')}`
+    );
+  }
+
+  console.log(`✅ Topic detection validation passed: ${assignedQuestionIds.size}/${expectedQuestionIds.length} questions assigned across ${validatedTopics.length} topics`);
 
   return { topics: validatedTopics };
 }
