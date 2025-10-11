@@ -3,13 +3,6 @@ import { createBrowserClient } from '@supabase/ssr';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-// Debug logging
-console.log('🔧 Supabase Client Initialization');
-console.log('📍 URL:', supabaseUrl);
-console.log('🔑 Anon Key (first 50 chars):', supabaseAnonKey?.substring(0, 50));
-console.log('🔑 Anon Key (last 20 chars):', supabaseAnonKey?.substring(supabaseAnonKey.length - 20));
-console.log('📏 Anon Key length:', supabaseAnonKey?.length);
-
 export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
 
 export type Exam = {
