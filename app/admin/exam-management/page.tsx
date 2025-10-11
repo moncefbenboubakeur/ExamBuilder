@@ -30,6 +30,7 @@ export default function ExamManagement() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
+  const [inputMode, setInputMode] = useState<'select' | 'manual'>('select');
   const router = useRouter();
 
   useEffect(() => {
@@ -196,18 +197,73 @@ export default function ExamManagement() {
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Target User Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                value={targetEmail}
-                onChange={(e) => setTargetEmail(e.target.value)}
-                placeholder="user@example.com"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
+              <div className="flex items-center justify-between mb-2">
+                <label htmlFor="targetUser" className="block text-sm font-medium text-gray-700">
+                  Target User
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setInputMode('select');
+                      setTargetEmail('');
+                    }}
+                    className={`px-3 py-1 text-xs rounded-md transition-colors ${
+                      inputMode === 'select'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    Select User
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setInputMode('manual');
+                      setTargetEmail('');
+                    }}
+                    className={`px-3 py-1 text-xs rounded-md transition-colors ${
+                      inputMode === 'manual'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    Type Email
+                  </button>
+                </div>
+              </div>
+
+              {inputMode === 'select' ? (
+                <select
+                  id="targetUser"
+                  value={targetEmail}
+                  onChange={(e) => setTargetEmail(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                >
+                  <option value="">Choose a user...</option>
+                  {usersData.map((userData) => (
+                    <option key={userData.user_id} value={userData.user_email}>
+                      {userData.user_email} ({userData.exams.length} exam{userData.exams.length !== 1 ? 's' : ''})
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="email"
+                  id="targetUser"
+                  value={targetEmail}
+                  onChange={(e) => setTargetEmail(e.target.value)}
+                  placeholder="user@example.com"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              )}
+              <p className="mt-1 text-xs text-gray-500">
+                {inputMode === 'select'
+                  ? 'Select from existing users in the system'
+                  : 'Manually type an email address (user must have an account)'}
+              </p>
             </div>
 
             {message && (
@@ -346,13 +402,19 @@ export default function ExamManagement() {
           )}
         </div>
 
-        {/* Back Button */}
-        <div className="mt-6">
+        {/* Back Buttons */}
+        <div className="mt-6 flex gap-4">
           <button
             onClick={() => router.push('/dashboard')}
             className="text-blue-600 hover:text-blue-700 font-medium"
           >
             ← Back to Dashboard
+          </button>
+          <button
+            onClick={() => router.push('/admin')}
+            className="text-blue-600 hover:text-blue-700 font-medium"
+          >
+            ← Back to Admin Portal
           </button>
         </div>
       </div>
