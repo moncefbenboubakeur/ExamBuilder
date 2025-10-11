@@ -4,19 +4,24 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 
-interface Exam {
-  id: string;
-  name: string;
-  user_id: string;
-  user_email?: string;
-  file_name?: string;
+interface ExamWithSharing {
+  exam_id: string;
+  exam_name: string;
+  question_count: number;
   created_at: string;
-  question_count?: number;
-  is_sample?: boolean;
+  is_owner: boolean;
+  owner_email: string;
+  shared_by_email?: string;
+}
+
+interface UserExamsData {
+  user_id: string;
+  user_email: string;
+  exams: ExamWithSharing[];
 }
 
 export default function ExamManagement() {
-  const [exams, setExams] = useState<Exam[]>([]);
+  const [usersData, setUsersData] = useState<UserExamsData[]>([]);
   const [loading, setLoading] = useState(true);
   const [targetEmail, setTargetEmail] = useState('');
   const [selectedExamId, setSelectedExamId] = useState<string | null>(null);
@@ -24,6 +29,7 @@ export default function ExamManagement() {
   const [error, setError] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
   const router = useRouter();
 
   useEffect(() => {
@@ -48,21 +54,31 @@ export default function ExamManagement() {
         return;
       }
 
-      // Fetch all exams via admin API
-      const response = await fetch('/api/admin/exams');
+      // Fetch user-organized exams via admin API
+      const response = await fetch('/api/admin/users-exams');
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to fetch exams');
       }
 
-      setExams(data.exams || []);
+      setUsersData(data.users || []);
     } catch (err) {
       console.error('Error fetching exams:', err);
       setError('Failed to load exams');
     } finally {
       setLoading(false);
     }
+  };
+
+  const toggleUserExpanded = (userId: string) => {
+    const newExpanded = new Set(expandedUsers);
+    if (newExpanded.has(userId)) {
+      newExpanded.delete(userId);
+    } else {
+      newExpanded.add(userId);
+    }
+    setExpandedUsers(newExpanded);
   };
 
   const handleCopyExam = async (e: React.FormEvent) => {
@@ -169,11 +185,13 @@ export default function ExamManagement() {
                 required
               >
                 <option value="">Choose an exam...</option>
-                {exams.map((exam) => (
-                  <option key={exam.id} value={exam.id}>
-                    {exam.name} ({exam.question_count} questions)
-                  </option>
-                ))}
+                {usersData.flatMap((userData) =>
+                  userData.exams.map((exam) => (
+                    <option key={exam.exam_id} value={exam.exam_id}>
+                      {exam.exam_name} - {userData.user_email} ({exam.question_count} questions)
+                    </option>
+                  ))
+                )}
               </select>
             </div>
 
@@ -213,100 +231,113 @@ export default function ExamManagement() {
           </form>
         </div>
 
-        {/* Exam List */}
+        {/* User-Organized Exam List */}
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-xl font-semibold">All Exams (Admin View)</h2>
-            <p className="text-sm text-gray-600 mt-1">View and manage all users&apos; exams</p>
+            <h2 className="text-xl font-semibold">Exams by User</h2>
+            <p className="text-sm text-gray-600 mt-1">View exams organized by user, showing owned and shared exams</p>
           </div>
 
-          {exams.length === 0 ? (
+          {usersData.length === 0 ? (
             <div className="px-6 py-8 text-center text-gray-500">
-              No exams found.
+              No users with exams found.
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Exam Name
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Owner
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Questions
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      File Name
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Created
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {exams.map((exam) => (
-                    <tr key={exam.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          {exam.name}
-                          {exam.is_sample && (
-                            <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                              Sample
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-600">{exam.user_email}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">{exam.question_count}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">{exam.file_name || 'N/A'}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">
-                          {new Date(exam.created_at).toLocaleDateString()}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        {deleteConfirm === exam.id ? (
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => handleDeleteExam(exam.id, exam.name)}
-                              disabled={deleting === exam.id}
-                              className="text-red-600 hover:text-red-700 font-medium disabled:opacity-50"
-                            >
-                              {deleting === exam.id ? 'Deleting...' : 'Confirm'}
-                            </button>
-                            <button
-                              onClick={() => setDeleteConfirm(null)}
-                              disabled={deleting === exam.id}
-                              className="text-gray-600 hover:text-gray-700 disabled:opacity-50"
-                            >
-                              Cancel
-                            </button>
+            <div className="divide-y divide-gray-200">
+              {usersData.map((userData) => (
+                <div key={userData.user_id} className="px-6 py-4">
+                  {/* User Header */}
+                  <button
+                    onClick={() => toggleUserExpanded(userData.user_id)}
+                    className="w-full flex items-center justify-between py-2 hover:bg-gray-50 rounded"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                        {userData.user_email[0].toUpperCase()}
+                      </div>
+                      <div className="text-left">
+                        <div className="font-semibold text-gray-900">{userData.user_email}</div>
+                        <div className="text-sm text-gray-500">{userData.exams.length} exam{userData.exams.length !== 1 ? 's' : ''}</div>
+                      </div>
+                    </div>
+                    <svg
+                      className={`w-5 h-5 text-gray-500 transition-transform ${expandedUsers.has(userData.user_id) ? 'rotate-90' : ''}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+
+                  {/* Exams List */}
+                  {expandedUsers.has(userData.user_id) && (
+                    <div className="mt-4 ml-11 space-y-3">
+                      {userData.exams.map((exam) => (
+                        <div key={exam.exam_id} className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h4 className="font-medium text-gray-900">{exam.exam_name}</h4>
+                              <div className="mt-2 space-y-1 text-sm">
+                                <div className="text-gray-600">
+                                  <span className="font-medium">Questions:</span> {exam.question_count}
+                                </div>
+                                <div className="text-gray-600">
+                                  <span className="font-medium">Created:</span> {new Date(exam.created_at).toLocaleDateString()}
+                                </div>
+                                {exam.is_owner ? (
+                                  <div className="flex items-center gap-1">
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                      Owner
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <div className="text-gray-600">
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                      Shared
+                                    </span>
+                                    <span className="ml-2">by {exam.shared_by_email}</span>
+                                    <div className="text-xs text-gray-500 mt-1">
+                                      Original owner: {exam.owner_email}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <div className="ml-4">
+                              {deleteConfirm === exam.exam_id ? (
+                                <div className="flex flex-col gap-2">
+                                  <button
+                                    onClick={() => handleDeleteExam(exam.exam_id, exam.exam_name)}
+                                    disabled={deleting === exam.exam_id}
+                                    className="px-3 py-1 text-sm text-white bg-red-600 rounded hover:bg-red-700 disabled:opacity-50"
+                                  >
+                                    {deleting === exam.exam_id ? 'Deleting...' : 'Confirm'}
+                                  </button>
+                                  <button
+                                    onClick={() => setDeleteConfirm(null)}
+                                    disabled={deleting === exam.exam_id}
+                                    className="px-3 py-1 text-sm text-gray-600 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => setDeleteConfirm(exam.exam_id)}
+                                  className="px-3 py-1 text-sm text-red-600 hover:text-red-700 font-medium"
+                                >
+                                  Delete
+                                </button>
+                              )}
+                            </div>
                           </div>
-                        ) : (
-                          <button
-                            onClick={() => setDeleteConfirm(exam.id)}
-                            className="text-red-600 hover:text-red-700 font-medium"
-                          >
-                            Delete
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </div>
