@@ -192,9 +192,17 @@ export default function AdminPage() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 border-2 border-indigo-200">
-          <div className="flex items-center gap-3 mb-2">
-            <Shield className="w-8 h-8 text-indigo-600" />
-            <h1 className="text-3xl font-bold text-neutral-900">Admin Console</h1>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-3">
+              <Shield className="w-8 h-8 text-indigo-600" />
+              <h1 className="text-3xl font-bold text-neutral-900">Admin Console</h1>
+            </div>
+            <a
+              href="/admin/exam-management"
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+            >
+              Manage Exams
+            </a>
           </div>
           <p className="text-neutral-600">
             Logged in as: <span className="font-semibold">{user?.email}</span>

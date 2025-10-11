@@ -8,9 +8,11 @@ interface Exam {
   id: string;
   name: string;
   user_id: string;
+  user_email?: string;
   file_name?: string;
   created_at: string;
   question_count?: number;
+  is_sample?: boolean;
 }
 
 export default function ExamManagement() {
@@ -20,6 +22,8 @@ export default function ExamManagement() {
   const [selectedExamId, setSelectedExamId] = useState<string | null>(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -36,28 +40,23 @@ export default function ExamManagement() {
         return;
       }
 
-      // Fetch user's exams with question count
-      const { data, error } = await supabase
-        .from('exams')
-        .select(`
-          id,
-          name,
-          user_id,
-          file_name,
-          created_at,
-          questions (count)
-        `)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+      // Check if user is admin
+      const isAdmin = user.email === 'monceftab@gmail.com';
 
-      if (error) throw error;
+      if (!isAdmin) {
+        router.push('/');
+        return;
+      }
 
-      const examsWithCount = data?.map((exam: Exam & { questions: Array<{ count: number }> }) => ({
-        ...exam,
-        question_count: exam.questions[0]?.count || 0,
-      }));
+      // Fetch all exams via admin API
+      const response = await fetch('/api/admin/exams');
+      const data = await response.json();
 
-      setExams(examsWithCount || []);
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch exams');
+      }
+
+      setExams(data.exams || []);
     } catch (err) {
       console.error('Error fetching exams:', err);
       setError('Failed to load exams');
@@ -100,6 +99,37 @@ export default function ExamManagement() {
     } catch (err) {
       console.error('Error copying exam:', err);
       setError(err instanceof Error ? err.message : 'Failed to copy exam');
+    }
+  };
+
+  const handleDeleteExam = async (examId: string, examName: string) => {
+    if (deleting) return;
+
+    setDeleting(examId);
+    setMessage('');
+    setError('');
+
+    try {
+      const response = await fetch(`/api/admin/exams/${examId}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete exam');
+      }
+
+      setMessage(`Exam "${examName}" deleted successfully`);
+      setDeleteConfirm(null);
+
+      // Refresh exams list
+      await fetchExams();
+    } catch (err) {
+      console.error('Error deleting exam:', err);
+      setError(err instanceof Error ? err.message : 'Failed to delete exam');
+    } finally {
+      setDeleting(null);
     }
   };
 
@@ -186,12 +216,13 @@ export default function ExamManagement() {
         {/* Exam List */}
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-xl font-semibold">Your Exams</h2>
+            <h2 className="text-xl font-semibold">All Exams (Admin View)</h2>
+            <p className="text-sm text-gray-600 mt-1">View and manage all users&apos; exams</p>
           </div>
 
           {exams.length === 0 ? (
             <div className="px-6 py-8 text-center text-gray-500">
-              No exams found. Upload an exam to get started.
+              No exams found.
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -202,6 +233,9 @@ export default function ExamManagement() {
                       Exam Name
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Owner
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Questions
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -210,13 +244,26 @@ export default function ExamManagement() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Created
                     </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {exams.map((exam) => (
                     <tr key={exam.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{exam.name}</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {exam.name}
+                          {exam.is_sample && (
+                            <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                              Sample
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-600">{exam.user_email}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-500">{exam.question_count}</div>
@@ -228,6 +275,33 @@ export default function ExamManagement() {
                         <div className="text-sm text-gray-500">
                           {new Date(exam.created_at).toLocaleDateString()}
                         </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {deleteConfirm === exam.id ? (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleDeleteExam(exam.id, exam.name)}
+                              disabled={deleting === exam.id}
+                              className="text-red-600 hover:text-red-700 font-medium disabled:opacity-50"
+                            >
+                              {deleting === exam.id ? 'Deleting...' : 'Confirm'}
+                            </button>
+                            <button
+                              onClick={() => setDeleteConfirm(null)}
+                              disabled={deleting === exam.id}
+                              className="text-gray-600 hover:text-gray-700 disabled:opacity-50"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setDeleteConfirm(exam.id)}
+                            className="text-red-600 hover:text-red-700 font-medium"
+                          >
+                            Delete
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
