@@ -7,7 +7,7 @@ SECURITY DEFINER
 AS $$
 BEGIN
   RETURN QUERY
-  SELECT auth.users.id, auth.users.email
+  SELECT auth.users.id, auth.users.email::TEXT
   FROM auth.users
   ORDER BY auth.users.email;
 END;

@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
+import { createAdminClient } from '@/lib/supabase-admin';
 
 export async function DELETE(
   request: NextRequest,
   context: { params: Promise<{ exam_id: string }> }
 ) {
   try {
+    // Use regular client for authentication check
     const supabase = await createClient();
     const { exam_id } = await context.params;
 
@@ -24,8 +26,11 @@ export async function DELETE(
       return NextResponse.json({ error: 'Missing exam_id' }, { status: 400 });
     }
 
-    // Verify exam exists
-    const { data: exam, error: examError } = await supabase
+    // Use admin client to bypass RLS for exam deletion
+    const adminClient = createAdminClient();
+
+    // Verify exam exists (bypassing RLS)
+    const { data: exam, error: examError } = await adminClient
       .from('exams')
       .select('id, name, user_id')
       .eq('id', exam_id)
@@ -36,7 +41,7 @@ export async function DELETE(
     }
 
     // Delete the exam (cascade deletes will handle questions, sessions, etc.)
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await adminClient
       .from('exams')
       .delete()
       .eq('id', exam_id);

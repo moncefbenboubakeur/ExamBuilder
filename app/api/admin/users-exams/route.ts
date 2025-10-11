@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
+import { createAdminClient } from '@/lib/supabase-admin';
 
 interface ExamWithSharing {
   exam_id: string;
@@ -32,6 +33,9 @@ export async function GET() {
       return NextResponse.json({ error: 'Forbidden - Admin only' }, { status: 403 });
     }
 
+    // Use admin client to bypass RLS for fetching all users' data
+    const adminClient = createAdminClient();
+
     // Fetch all users from auth.users
     const { data: users, error: usersError } = await supabase
       .rpc('get_all_users');
@@ -47,8 +51,8 @@ export async function GET() {
       const userId = userData.id;
       const userEmail = userData.email;
 
-      // Get owned exams
-      const { data: ownedExams } = await supabase
+      // Get owned exams (using admin client to bypass RLS)
+      const { data: ownedExams, error: ownedError } = await adminClient
         .from('exams')
         .select(`
           id,
@@ -59,8 +63,12 @@ export async function GET() {
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
-      // Get shared exams
-      const { data: sharedExams } = await supabase
+      if (ownedError) {
+        console.error(`Error fetching owned exams for ${userEmail}:`, ownedError);
+      }
+
+      // Get shared exams (using admin client to bypass RLS)
+      const { data: sharedExams } = await adminClient
         .from('exam_shares')
         .select(`
           exam_id,
@@ -98,11 +106,11 @@ export async function GET() {
           const examData = (share as unknown as { exams: { id: string; name: string; created_at: string; user_id: string; questions: { count: number }[] } }).exams;
           if (examData) {
             // Get the email of the person who shared it
-            const { data: sharedByEmail } = await supabase
+            const { data: sharedByEmail } = await adminClient
               .rpc('get_user_email', { user_uuid: share.shared_by });
 
             // Get the email of the owner
-            const { data: ownerEmail } = await supabase
+            const { data: ownerEmail } = await adminClient
               .rpc('get_user_email', { user_uuid: examData.user_id });
 
             exams.push({
@@ -118,16 +126,14 @@ export async function GET() {
         }
       }
 
-      // Only add users who have exams
-      if (exams.length > 0) {
-        userExamsData.push({
-          user_id: userId,
-          user_email: userEmail,
-          exams: exams.sort((a, b) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-          ),
-        });
-      }
+      // Add all users (including those with no exams)
+      userExamsData.push({
+        user_id: userId,
+        user_email: userEmail,
+        exams: exams.sort((a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        ),
+      });
     }
 
     return NextResponse.json({
@@ -137,9 +143,20 @@ export async function GET() {
 
   } catch (error) {
     console.error('Failed to fetch user exams:', error);
+
+    // Better error serialization
+    let errorDetails = 'Unknown error';
+    if (error instanceof Error) {
+      errorDetails = error.message;
+    } else if (typeof error === 'object' && error !== null) {
+      errorDetails = JSON.stringify(error);
+    } else {
+      errorDetails = String(error);
+    }
+
     return NextResponse.json({
       error: 'Failed to fetch user exams',
-      details: error instanceof Error ? error.message : String(error)
+      details: errorDetails
     }, { status: 500 });
   }
 }

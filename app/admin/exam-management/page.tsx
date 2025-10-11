@@ -186,8 +186,8 @@ export default function ExamManagement() {
               >
                 <option value="">Choose an exam...</option>
                 {usersData.flatMap((userData) =>
-                  userData.exams.map((exam) => (
-                    <option key={exam.exam_id} value={exam.exam_id}>
+                  userData.exams.map((exam, examIndex) => (
+                    <option key={`${userData.user_id}-${exam.exam_id}-${examIndex}`} value={exam.exam_id}>
                       {exam.exam_name} - {userData.user_email} ({exam.question_count} questions)
                     </option>
                   ))
@@ -240,7 +240,7 @@ export default function ExamManagement() {
 
           {usersData.length === 0 ? (
             <div className="px-6 py-8 text-center text-gray-500">
-              No users with exams found.
+              No users found.
             </div>
           ) : (
             <div className="divide-y divide-gray-200">
@@ -273,7 +273,10 @@ export default function ExamManagement() {
                   {/* Exams List */}
                   {expandedUsers.has(userData.user_id) && (
                     <div className="mt-4 ml-11 space-y-3">
-                      {userData.exams.map((exam) => (
+                      {userData.exams.length === 0 ? (
+                        <div className="text-sm text-gray-500 italic">No exams found for this user</div>
+                      ) : (
+                        userData.exams.map((exam) => (
                         <div key={exam.exam_id} className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
@@ -333,7 +336,8 @@ export default function ExamManagement() {
                             </div>
                           </div>
                         </div>
-                      ))}
+                        ))
+                      )}
                     </div>
                   )}
                 </div>

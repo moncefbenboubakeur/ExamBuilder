@@ -33,7 +33,7 @@ export default function AdminPage() {
   const [selectedModel, setSelectedModel] = useState<AIModel | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
-  const [exams, setExams] = useState<Array<{ id: string; title: string; question_count: number }>>([]);
+  const [exams, setExams] = useState<Array<{ id: string; name: string; question_count: number }>>([]);
   const [reanalyzing, setReanalyzing] = useState<string | null>(null);
 
   useEffect(() => {
@@ -84,6 +84,8 @@ export default function AdminPage() {
       const data = await response.json();
       if (data.success && data.exams) {
         setExams(data.exams);
+      } else {
+        console.error('Failed to fetch exams:', data.error || 'Unknown error');
       }
     } catch (error) {
       console.error('Failed to fetch exams:', error);
@@ -344,7 +346,7 @@ export default function AdminPage() {
                   className="flex items-center justify-between p-4 border-2 border-neutral-200 rounded-xl hover:border-purple-300 transition-colors"
                 >
                   <div>
-                    <h3 className="font-semibold text-lg">{exam.title}</h3>
+                    <h3 className="font-semibold text-lg">{exam.name}</h3>
                     <p className="text-sm text-neutral-600">
                       {exam.question_count || 0} questions
                     </p>
