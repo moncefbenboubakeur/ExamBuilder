@@ -49,18 +49,24 @@ export async function parseMarkdownTable(
         continue;
       }
 
-      // Parse question row
-      if (cells.length >= 6 && inTable) {
+      // Parse question row (require at least 4 cells: question#, question, options, answer)
+      if (cells.length >= 4 && inTable) {
         try {
           const questionNumber = parseInt(cells[0], 10);
           const questionText = cells[1];
           const optionsText = cells[2];
           const correctAnswer = cells[3].toUpperCase();
-          const communityVote = cells[4];
-          const hasIllustration = cells[5].toLowerCase().includes('yes');
+          const communityVote = cells[4] || '';
+          const hasIllustration = cells[5] ? cells[5].toLowerCase().includes('yes') : false;
 
           // Parse options from format like "A. Text\nB. Text\nC. Text\nD. Text"
-          const options = parseOptions(optionsText);
+          // For HOTSPOT questions with non-standard formats, store the raw text
+          let options = parseOptions(optionsText);
+
+          // If parsing failed (HOTSPOT or other structured format), create a single option with raw text
+          if (!options && optionsText) {
+            options = { 'RAW': optionsText };
+          }
 
           if (questionNumber && questionText && options) {
             questions.push({
@@ -76,10 +82,8 @@ export async function parseMarkdownTable(
           console.error('Error parsing row:', cells, error);
         }
       }
-    } else if (inTable && trimmedLine.length === 0) {
-      // End of table
-      break;
     }
+    // Don't break on empty lines - continue parsing through entire file
   }
 
   return questions;
@@ -196,4 +200,46 @@ function extractTextFromNode(node: ASTNode): string {
   }
 
   return '';
+}
+
+/**
+ * Quickly count questions in markdown content without full parsing
+ * This is useful for preview purposes
+ */
+export function countQuestions(markdownContent: string): number {
+  const lines = markdownContent.split('\n');
+  let questionCount = 0;
+
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+
+    // Check if this is a table row (but not a header or separator)
+    if (trimmedLine.startsWith('|') && trimmedLine.endsWith('|')) {
+      // Skip separator lines (like |---|---|)
+      if (trimmedLine.includes('---')) {
+        continue;
+      }
+
+      // Skip header row (contains "Question #" text)
+      if (trimmedLine.toLowerCase().includes('question #')) {
+        continue;
+      }
+
+      // Count question rows (must have at least 4 cells: question#, question, options, answer)
+      const cells = trimmedLine
+        .split('|')
+        .map((cell) => cell.trim())
+        .filter((cell) => cell.length > 0);
+
+      if (cells.length >= 4) {
+        // Try to parse question number from first cell
+        const questionNumber = parseInt(cells[0], 10);
+        if (!isNaN(questionNumber) && questionNumber > 0) {
+          questionCount++;
+        }
+      }
+    }
+  }
+
+  return questionCount;
 }

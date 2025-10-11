@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Upload, FileText, CheckCircle, AlertCircle } from 'lucide-react';
+import { Upload, FileText, CheckCircle, AlertCircle, Hash } from 'lucide-react';
+import { countQuestions } from '@/lib/parseMarkdown';
 
 interface FileUploadProps {
   onUploadSuccess?: () => void;
@@ -12,17 +13,34 @@ export default function FileUpload({ onUploadSuccess }: FileUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [questionCount, setQuestionCount] = useState<number | null>(null);
+  const [scanning, setScanning] = useState(false);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
       if (selectedFile.name.endsWith('.md')) {
         setFile(selectedFile);
         setError(null);
         setSuccess(false);
+        setScanning(true);
+        setQuestionCount(null);
+
+        // Read file content and count questions
+        try {
+          const content = await selectedFile.text();
+          const count = countQuestions(content);
+          setQuestionCount(count);
+        } catch (err) {
+          console.error('Error scanning file:', err);
+          setQuestionCount(null);
+        } finally {
+          setScanning(false);
+        }
       } else {
         setError('Please select a .md (Markdown) file');
         setFile(null);
+        setQuestionCount(null);
       }
     }
   };
@@ -51,6 +69,7 @@ export default function FileUpload({ onUploadSuccess }: FileUploadProps) {
 
       setSuccess(true);
       setFile(null);
+      setQuestionCount(null);
 
       // Reset file input
       const fileInput = document.getElementById('file-upload') as HTMLInputElement;
@@ -93,9 +112,24 @@ export default function FileUpload({ onUploadSuccess }: FileUploadProps) {
         </div>
 
         {file && (
-          <div className="mb-4 p-3 bg-blue-50 rounded-lg flex items-center gap-2">
-            <FileText className="w-5 h-5 text-blue-600" />
-            <span className="text-sm text-blue-900 flex-1 truncate">{file.name}</span>
+          <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="flex items-center gap-2 mb-2">
+              <FileText className="w-5 h-5 text-blue-600" />
+              <span className="text-sm text-blue-900 flex-1 truncate font-medium">{file.name}</span>
+            </div>
+            {scanning ? (
+              <div className="flex items-center gap-2 text-xs text-blue-700">
+                <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                <span>Scanning questions...</span>
+              </div>
+            ) : questionCount !== null ? (
+              <div className="flex items-center gap-1.5 text-xs text-blue-700">
+                <Hash className="w-3.5 h-3.5" />
+                <span className="font-semibold">
+                  {questionCount} {questionCount === 1 ? 'question' : 'questions'} found
+                </span>
+              </div>
+            ) : null}
           </div>
         )}
 
