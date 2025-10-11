@@ -165,12 +165,15 @@ async function analyzeQuestion(question: QuestionData, settings: AISettingsData)
 
   let responseText = '';
 
+  console.log(`🔎 Analyzing question ${question.id} with ${settings.provider} (${settings.model_id})`);
+
   // Call appropriate AI provider based on settings
   if (settings.provider === 'anthropic') {
     const anthropic = new Anthropic({
       apiKey: process.env.ANTHROPIC_API_KEY,
     });
 
+    console.log(`📤 Sending request to Anthropic...`);
     const message = await anthropic.messages.create({
       model: settings.model_id,
       max_tokens: 2500,
@@ -179,9 +182,28 @@ async function analyzeQuestion(question: QuestionData, settings: AISettingsData)
       ],
     });
 
-    responseText = message.content[0].type === 'text'
-      ? message.content[0].text
-      : '';
+    console.log(`📥 Received response from Anthropic:`, {
+      id: message.id,
+      model: message.model,
+      stop_reason: message.stop_reason,
+      contentLength: message.content?.length,
+      contentType: message.content[0]?.type,
+      textPreview: message.content[0]?.type === 'text' ? message.content[0].text.substring(0, 100) : 'N/A'
+    });
+
+    if (!message.content || message.content.length === 0) {
+      throw new Error('Anthropic returned no content blocks');
+    }
+
+    if (message.content[0].type !== 'text') {
+      throw new Error(`Anthropic returned unexpected content type: ${message.content[0].type}`);
+    }
+
+    responseText = message.content[0].text;
+
+    if (!responseText || responseText.trim().length === 0) {
+      throw new Error('Anthropic returned empty text content');
+    }
 
   } else if (settings.provider === 'openai') {
     const openai = new OpenAI({
