@@ -45,16 +45,16 @@ export default function PreviewPanel({
   }
 
   return (
-    <aside className="hidden lg:block w-full lg:w-[480px] xl:w-[560px] h-screen sticky top-0 bg-neutral-50 border-l border-neutral-200 flex-shrink-0">
+    <aside className="hidden lg:block w-full lg:w-[480px] xl:w-[560px] h-screen sticky top-0 bg-neutral-50 dark:bg-gray-900 border-l border-neutral-200 dark:border-gray-700 flex-shrink-0">
       {/* Panel Header */}
-      <div className="flex items-center justify-between p-4 border-b border-neutral-200 bg-white">
+      <div className="flex items-center justify-between p-4 border-b border-neutral-200 dark:border-gray-700 bg-white dark:bg-gray-800">
         <div className="flex items-center gap-2">
           <Eye className="w-5 h-5 text-indigo-600" />
-          <h3 className="text-lg font-semibold text-neutral-900">Live Preview</h3>
+          <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">Live Preview</h3>
         </div>
 
         {/* Device Switcher */}
-        <div className="flex items-center gap-1 bg-neutral-100 p-1 rounded-lg">
+        <div className="flex items-center gap-1 bg-neutral-100 dark:bg-gray-700 p-1 rounded-lg">
           {(Object.keys(deviceConfigs) as DeviceType[]).map((deviceType) => {
             const DeviceIcon = deviceConfigs[deviceType].icon;
             return (
@@ -64,8 +64,8 @@ export default function PreviewPanel({
                 className={cn(
                   'p-1.5 rounded transition-colors',
                   device === deviceType
-                    ? 'bg-white text-indigo-600 shadow-sm'
-                    : 'text-neutral-600 hover:text-neutral-900'
+                    ? 'bg-white dark:bg-gray-600 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                    : 'text-neutral-600 dark:text-gray-400 hover:text-neutral-900 dark:hover:text-gray-200'
                 )}
                 aria-label={`Preview on ${deviceConfigs[deviceType].label}`}
               >
@@ -77,7 +77,7 @@ export default function PreviewPanel({
 
         <button
           onClick={onToggle}
-          className="p-2 rounded-lg text-neutral-600 hover:bg-neutral-100 transition-colors"
+          className="p-2 rounded-lg text-neutral-600 dark:text-gray-400 hover:bg-neutral-100 dark:hover:bg-gray-700 transition-colors"
           aria-label="Close preview"
         >
           <EyeOff className="w-4 h-4" />
@@ -96,7 +96,7 @@ export default function PreviewPanel({
             <div className="space-y-4">
               {/* Device Frame Indicator */}
               <div className="text-center">
-                <span className="inline-block text-xs font-medium text-neutral-500 bg-white px-3 py-1 rounded-full border border-neutral-200">
+                <span className="inline-block text-xs font-medium text-neutral-500 dark:text-gray-400 bg-white dark:bg-gray-800 px-3 py-1 rounded-full border border-neutral-200 dark:border-gray-700">
                   {deviceConfigs[device].label} View
                 </span>
               </div>
@@ -114,11 +114,11 @@ export default function PreviewPanel({
               </div>
 
               {/* Preview Notes */}
-              <div className="bg-white border border-indigo-200 rounded-xl p-4">
-                <p className="text-xs text-indigo-900 font-medium mb-2">
+              <div className="bg-white dark:bg-gray-800 border border-indigo-200 dark:border-indigo-700 rounded-xl p-4">
+                <p className="text-xs text-indigo-900 dark:text-indigo-300 font-medium mb-2">
                   📱 Preview Tips:
                 </p>
-                <ul className="text-xs text-neutral-700 space-y-1">
+                <ul className="text-xs text-neutral-700 dark:text-gray-300 space-y-1">
                   <li>• Switch between devices to test responsiveness</li>
                   <li>• Preview updates automatically as you edit</li>
                   <li>• Click answers to test interaction</li>
@@ -127,13 +127,13 @@ export default function PreviewPanel({
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-center px-4">
-              <div className="w-20 h-20 bg-neutral-200 rounded-full flex items-center justify-center mb-4">
-                <Eye className="w-10 h-10 text-neutral-400" />
+              <div className="w-20 h-20 bg-neutral-200 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                <Eye className="w-10 h-10 text-neutral-400 dark:text-gray-500" />
               </div>
-              <h4 className="text-lg font-semibold text-neutral-900 mb-2">
+              <h4 className="text-lg font-semibold text-neutral-900 dark:text-white mb-2">
                 No Question Selected
               </h4>
-              <p className="text-sm text-neutral-600 max-w-xs">
+              <p className="text-sm text-neutral-600 dark:text-gray-400 max-w-xs">
                 Select or create a question to see a live preview of how it will appear to students.
               </p>
             </div>

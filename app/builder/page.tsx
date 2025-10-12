@@ -109,7 +109,7 @@ export default function ExamBuilderPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-neutral-50 dark:bg-gray-900">
       {/* Toast Notifications */}
       <ToastContainer toasts={toasts} onRemove={removeToast} />
 
@@ -139,17 +139,17 @@ export default function ExamBuilderPage() {
             {currentStep === 'info' && (
               <div className="space-y-6 animate-fadeIn">
                 <div>
-                  <h2 className="text-3xl font-bold text-neutral-900 mb-2">
+                  <h2 className="text-3xl font-bold text-neutral-900 dark:text-white mb-2">
                     Exam Information
                   </h2>
-                  <p className="text-neutral-600">
+                  <p className="text-neutral-600 dark:text-gray-400">
                     Let&apos;s start with the basics about your exam
                   </p>
                 </div>
 
                 {/* Exam Name */}
-                <div className="bg-white rounded-xl border border-neutral-200 p-6 shadow-sm">
-                  <label className="block text-sm font-semibold text-neutral-900 mb-2">
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-neutral-200 dark:border-gray-700 p-6 shadow-sm">
+                  <label className="block text-sm font-semibold text-neutral-900 dark:text-white mb-2">
                     Exam Name *
                   </label>
                   <input
@@ -157,13 +157,13 @@ export default function ExamBuilderPage() {
                     value={examName}
                     onChange={(e) => setExamName(e.target.value)}
                     placeholder="e.g., AWS Solutions Architect Practice Exam"
-                    className="w-full px-4 py-3 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-lg"
+                    className="w-full px-4 py-3 border border-neutral-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-lg bg-white dark:bg-gray-900 text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-gray-500"
                   />
                 </div>
 
                 {/* Exam Description */}
-                <div className="bg-white rounded-xl border border-neutral-200 p-6 shadow-sm">
-                  <label className="block text-sm font-semibold text-neutral-900 mb-2">
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-neutral-200 dark:border-gray-700 p-6 shadow-sm">
+                  <label className="block text-sm font-semibold text-neutral-900 dark:text-white mb-2">
                     Description
                   </label>
                   <textarea
@@ -171,7 +171,7 @@ export default function ExamBuilderPage() {
                     onChange={(e) => setExamDescription(e.target.value)}
                     placeholder="Briefly describe what this exam covers..."
                     rows={4}
-                    className="w-full px-4 py-3 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-neutral-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-gray-900 text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-gray-500"
                   />
                 </div>
 
@@ -192,10 +192,10 @@ export default function ExamBuilderPage() {
               <div className="space-y-6 animate-fadeIn">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-3xl font-bold text-neutral-900 mb-2">
+                    <h2 className="text-3xl font-bold text-neutral-900 dark:text-white mb-2">
                       Build Your Questions
                     </h2>
-                    <p className="text-neutral-600">
+                    <p className="text-neutral-600 dark:text-gray-400">
                       Add, edit, and organize your exam questions
                     </p>
                   </div>
@@ -209,7 +209,7 @@ export default function ExamBuilderPage() {
                       <Plus className="w-5 h-5" />
                       <span className="hidden sm:inline">Add Question</span>
                     </button>
-                    <button className="flex items-center gap-2 px-5 py-2.5 bg-white border-2 border-neutral-200 text-neutral-700 rounded-2xl font-medium hover:border-neutral-300 hover:bg-neutral-50 transition-all duration-200">
+                    <button className="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-gray-800 border-2 border-neutral-200 dark:border-gray-700 text-neutral-700 dark:text-gray-300 rounded-2xl font-medium hover:border-neutral-300 dark:hover:border-gray-600 hover:bg-neutral-50 dark:hover:bg-gray-700 transition-all duration-200">
                       <Upload className="w-5 h-5" />
                       <span className="hidden sm:inline">Import</span>
                     </button>
@@ -245,22 +245,22 @@ export default function ExamBuilderPage() {
             {currentStep === 'scoring' && (
               <div className="space-y-6 animate-fadeIn">
                 <div>
-                  <h2 className="text-3xl font-bold text-neutral-900 mb-2">
+                  <h2 className="text-3xl font-bold text-neutral-900 dark:text-white mb-2">
                     Scoring Settings
                   </h2>
-                  <p className="text-neutral-600">
+                  <p className="text-neutral-600 dark:text-gray-400">
                     Configure how your exam is graded
                   </p>
                 </div>
 
-                <div className="bg-white rounded-xl border border-neutral-200 p-6 shadow-sm">
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-neutral-200 dark:border-gray-700 p-6 shadow-sm">
                   <div className="flex items-center gap-3 mb-4">
                     <Settings className="w-6 h-6 text-indigo-600" />
-                    <h3 className="text-lg font-semibold text-neutral-900">
+                    <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
                       Grading Configuration
                     </h3>
                   </div>
-                  <p className="text-sm text-neutral-600">
+                  <p className="text-sm text-neutral-600 dark:text-gray-400">
                     Scoring settings will be configured here. Features include pass/fail thresholds,
                     weighted scoring, and more.
                   </p>
@@ -271,22 +271,22 @@ export default function ExamBuilderPage() {
             {currentStep === 'publish' && (
               <div className="space-y-6 animate-fadeIn">
                 <div>
-                  <h2 className="text-3xl font-bold text-neutral-900 mb-2">
+                  <h2 className="text-3xl font-bold text-neutral-900 dark:text-white mb-2">
                     Publish & Share
                   </h2>
-                  <p className="text-neutral-600">
+                  <p className="text-neutral-600 dark:text-gray-400">
                     Make your exam available to students
                   </p>
                 </div>
 
-                <div className="bg-white rounded-xl border border-neutral-200 p-6 shadow-sm">
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-neutral-200 dark:border-gray-700 p-6 shadow-sm">
                   <div className="flex items-center gap-3 mb-4">
                     <Share2 className="w-6 h-6 text-indigo-600" />
-                    <h3 className="text-lg font-semibold text-neutral-900">
+                    <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
                       Share Options
                     </h3>
                   </div>
-                  <p className="text-sm text-neutral-600">
+                  <p className="text-sm text-neutral-600 dark:text-gray-400">
                     Publishing options will be configured here. Generate shareable links,
                     set access permissions, and track exam sessions.
                   </p>

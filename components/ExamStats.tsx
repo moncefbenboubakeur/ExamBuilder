@@ -54,38 +54,38 @@ export default function ExamStats({
   };
 
   return (
-    <div className="bg-white rounded-2xl border-2 border-neutral-200 shadow-lg p-6 sm:p-8 max-w-2xl mx-auto">
+    <div className="bg-white dark:bg-gray-800 rounded-2xl border-2 border-neutral-200 dark:border-gray-700 shadow-lg p-6 sm:p-8 max-w-2xl mx-auto">
       {/* Header */}
       <div className="text-center mb-8">
         {getIcon()}
-        <h2 className="text-3xl sm:text-4xl font-bold text-neutral-900 mb-2">Exam Complete!</h2>
-        <p className="text-lg text-neutral-600">{getMessage()}</p>
+        <h2 className="text-3xl sm:text-4xl font-bold text-neutral-900 dark:text-white mb-2">Exam Complete!</h2>
+        <p className="text-lg text-neutral-600 dark:text-gray-300">{getMessage()}</p>
       </div>
 
       {/* Score Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
         {/* Correct Answers */}
-        <div className="bg-green-50 rounded-xl p-4 sm:p-6 border-2 border-green-200 hover:border-green-300 transition-colors">
+        <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4 sm:p-6 border-2 border-green-200 dark:border-green-800 hover:border-green-300 dark:hover:border-green-700 transition-colors">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
-              <CheckCircle className="w-7 h-7 text-green-600" />
+            <div className="w-12 h-12 bg-green-100 dark:bg-green-900/40 rounded-xl flex items-center justify-center flex-shrink-0">
+              <CheckCircle className="w-7 h-7 text-green-600 dark:text-green-400" />
             </div>
             <div>
-              <p className="text-sm text-green-600 font-semibold">Correct Answers</p>
-              <p className="text-3xl font-bold text-green-900">{correctCount}</p>
+              <p className="text-sm text-green-600 dark:text-green-400 font-semibold">Correct Answers</p>
+              <p className="text-3xl font-bold text-green-900 dark:text-green-300">{correctCount}</p>
             </div>
           </div>
         </div>
 
         {/* Wrong Answers */}
-        <div className="bg-red-50 rounded-xl p-4 sm:p-6 border-2 border-red-200 hover:border-red-300 transition-colors">
+        <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-4 sm:p-6 border-2 border-red-200 dark:border-red-800 hover:border-red-300 dark:hover:border-red-700 transition-colors">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
-              <XCircle className="w-7 h-7 text-red-600" />
+            <div className="w-12 h-12 bg-red-100 dark:bg-red-900/40 rounded-xl flex items-center justify-center flex-shrink-0">
+              <XCircle className="w-7 h-7 text-red-600 dark:text-red-400" />
             </div>
             <div>
-              <p className="text-sm text-red-600 font-semibold">Wrong Answers</p>
-              <p className="text-3xl font-bold text-red-900">{wrongCount}</p>
+              <p className="text-sm text-red-600 dark:text-red-400 font-semibold">Wrong Answers</p>
+              <p className="text-3xl font-bold text-red-900 dark:text-red-300">{wrongCount}</p>
             </div>
           </div>
         </div>
@@ -100,30 +100,30 @@ export default function ExamStats({
           <div className="flex items-center gap-4">
             <div className={cn(
               'w-14 h-14 rounded-2xl flex items-center justify-center',
-              score >= 90 ? 'bg-green-100' : score >= 70 ? 'bg-blue-100' : 'bg-red-100'
+              score >= 90 ? 'bg-green-100 dark:bg-green-900/40' : score >= 70 ? 'bg-blue-100 dark:bg-blue-900/40' : 'bg-red-100 dark:bg-red-900/40'
             )}>
               <TrendingUp className={cn(
                 'w-8 h-8',
-                score >= 90 ? 'text-green-600' : score >= 70 ? 'text-blue-600' : 'text-red-600'
+                score >= 90 ? 'text-green-600 dark:text-green-400' : score >= 70 ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'
               )} />
             </div>
             <div>
-              <p className="text-sm text-neutral-600 font-semibold mb-1">Your Score</p>
+              <p className="text-sm text-neutral-600 dark:text-gray-400 font-semibold mb-1">Your Score</p>
               <div className="flex items-baseline gap-2">
                 <p className={cn('text-4xl sm:text-5xl font-bold', getScoreColor())}>{score}%</p>
-                <p className="text-lg text-neutral-500">({correctCount}/{totalQuestions})</p>
+                <p className="text-lg text-neutral-500 dark:text-gray-400">({correctCount}/{totalQuestions})</p>
               </div>
             </div>
           </div>
 
           {/* Grade Badge */}
           <div className="text-center">
-            <p className="text-sm text-neutral-600 font-semibold mb-2">Grade</p>
+            <p className="text-sm text-neutral-600 dark:text-gray-400 font-semibold mb-2">Grade</p>
             <div className={cn(
               'w-20 h-20 rounded-2xl flex items-center justify-center text-3xl font-bold shadow-sm border-2',
               score >= 60
-                ? 'bg-green-100 text-green-700 border-green-300'
-                : 'bg-red-100 text-red-700 border-red-300'
+                ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border-green-300 dark:border-green-700'
+                : 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border-red-300 dark:border-red-700'
             )}>
               {getGrade()}
             </div>
@@ -133,8 +133,8 @@ export default function ExamStats({
 
       {/* Summary */}
       <div className="text-center">
-        <p className="text-sm text-neutral-500">
-          Total Questions: <span className="font-semibold text-neutral-700">{totalQuestions}</span>
+        <p className="text-sm text-neutral-500 dark:text-gray-400">
+          Total Questions: <span className="font-semibold text-neutral-700 dark:text-gray-300">{totalQuestions}</span>
         </p>
       </div>
     </div>

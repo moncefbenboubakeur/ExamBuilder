@@ -229,10 +229,10 @@ function ExamContent() {
 
   if (loading || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-neutral-50">
+      <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-gray-900">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-neutral-600">Loading exam...</p>
+          <p className="text-neutral-600 dark:text-gray-400">Loading exam...</p>
         </div>
       </div>
     );
@@ -240,9 +240,9 @@ function ExamContent() {
 
   if (questions.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-neutral-50">
+      <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-gray-900">
         <div className="text-center">
-          <p className="text-neutral-600 mb-4">No questions available</p>
+          <p className="text-neutral-600 dark:text-gray-400 mb-4">No questions available</p>
           <button
             onClick={() => router.push('/')}
             className="px-6 py-3 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 font-medium transition-all duration-200"
@@ -262,14 +262,14 @@ function ExamContent() {
   const canFinish = totalAnswered === questions.length;
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-neutral-50 dark:bg-gray-900">
       {/* Top Navigation Bar */}
-      <div className="sticky top-0 z-40 bg-white border-b border-neutral-200 shadow-sm">
+      <div className="sticky top-0 z-40 bg-white dark:bg-gray-800 border-b border-neutral-200 dark:border-gray-700 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <button
               onClick={handleExitExam}
-              className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-700 rounded-2xl font-medium hover:bg-red-100 transition-all duration-200 border-2 border-red-200"
+              className="flex items-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-2xl font-medium hover:bg-red-100 dark:hover:bg-red-900/30 transition-all duration-200 border-2 border-red-200 dark:border-red-800"
             >
               <X className="w-4 h-4" />
               <span className="hidden sm:inline">Exit Exam</span>
@@ -281,7 +281,7 @@ function ExamContent() {
       </div>
 
       {/* Progress Bar */}
-      <div className="bg-white border-b border-neutral-200">
+      <div className="bg-white dark:bg-gray-800 border-b border-neutral-200 dark:border-gray-700">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <ExamProgress
             currentQuestion={currentIndex}
@@ -306,7 +306,7 @@ function ExamContent() {
       </div>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-200 shadow-lg z-30">
+      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-neutral-200 dark:border-gray-700 shadow-lg z-30">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between gap-4">
             <button
@@ -315,15 +315,15 @@ function ExamContent() {
               className={cn(
                 'flex items-center gap-2 px-5 py-3 rounded-2xl font-medium transition-all duration-200',
                 currentIndex === 0
-                  ? 'bg-neutral-100 text-neutral-400 cursor-not-allowed'
-                  : 'bg-white border-2 border-neutral-200 text-neutral-700 hover:border-neutral-300 hover:bg-neutral-50'
+                  ? 'bg-neutral-100 dark:bg-gray-700 text-neutral-400 dark:text-gray-500 cursor-not-allowed'
+                  : 'bg-white dark:bg-gray-700 border-2 border-neutral-200 dark:border-gray-600 text-neutral-700 dark:text-gray-300 hover:border-neutral-300 dark:hover:border-gray-500 hover:bg-neutral-50 dark:hover:bg-gray-600'
               )}
             >
               <ChevronLeft className="w-5 h-5" />
               <span className="hidden sm:inline">Previous</span>
             </button>
 
-            <div className="flex items-center gap-2 text-sm text-neutral-600">
+            <div className="flex items-center gap-2 text-sm text-neutral-600 dark:text-gray-400">
               <span className="font-semibold">{currentIndex + 1}</span>
               <span>/</span>
               <span>{questions.length}</span>
@@ -337,7 +337,7 @@ function ExamContent() {
                   'flex items-center gap-2 px-6 py-3 rounded-2xl font-medium transition-all duration-200 shadow-sm',
                   canFinish
                     ? 'bg-green-600 text-white hover:bg-green-700 hover:shadow-md'
-                    : 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
+                    : 'bg-neutral-200 dark:bg-gray-700 text-neutral-400 dark:text-gray-500 cursor-not-allowed'
                 )}
               >
                 <CheckCircle className="w-5 h-5" />
@@ -361,16 +361,16 @@ function ExamContent() {
 
       {/* Exit Confirmation Dialog */}
       {showExitDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 sm:p-8 animate-fadeIn">
-            <h3 className="text-2xl font-bold text-neutral-900 mb-4">Exit Exam?</h3>
-            <p className="text-neutral-600 mb-6">
+        <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50 px-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-md w-full p-6 sm:p-8 animate-fadeIn">
+            <h3 className="text-2xl font-bold text-neutral-900 dark:text-white mb-4">Exit Exam?</h3>
+            <p className="text-neutral-600 dark:text-gray-300 mb-6">
               Are you sure you want to exit the exam? Your progress will be saved and you will be redirected to the results page.
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={() => setShowExitDialog(false)}
-                className="flex-1 px-5 py-3 bg-white border-2 border-neutral-200 text-neutral-700 rounded-2xl font-medium hover:border-neutral-300 hover:bg-neutral-50 transition-all duration-200"
+                className="flex-1 px-5 py-3 bg-white dark:bg-gray-700 border-2 border-neutral-200 dark:border-gray-600 text-neutral-700 dark:text-gray-300 rounded-2xl font-medium hover:border-neutral-300 dark:hover:border-gray-500 hover:bg-neutral-50 dark:hover:bg-gray-600 transition-all duration-200"
               >
                 Cancel
               </button>
@@ -391,10 +391,10 @@ function ExamContent() {
 export default function ExamPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-neutral-50">
+      <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-gray-900">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-neutral-600">Loading exam...</p>
+          <p className="text-neutral-600 dark:text-gray-400">Loading exam...</p>
         </div>
       </div>
     }>

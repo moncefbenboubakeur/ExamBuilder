@@ -162,10 +162,10 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-neutral-50">
+      <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-gray-900">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-neutral-600">Loading...</p>
+          <p className="text-neutral-600 dark:text-gray-400">Loading...</p>
         </div>
       </div>
     );
@@ -173,11 +173,11 @@ export default function AdminPage() {
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-neutral-50">
-        <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md">
+      <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-gray-900">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 max-w-md">
           <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-center mb-2">Access Denied</h2>
-          <p className="text-neutral-600 text-center">
+          <h2 className="text-2xl font-bold text-center mb-2 dark:text-white">Access Denied</h2>
+          <p className="text-neutral-600 dark:text-gray-400 text-center">
             This page is restricted to administrators only.
           </p>
         </div>
@@ -190,14 +190,14 @@ export default function AdminPage() {
   const googleModels = AI_MODELS.filter(m => m.provider === 'google');
 
   return (
-    <div className="min-h-screen bg-neutral-50 py-8 px-4">
+    <div className="min-h-screen bg-neutral-50 dark:bg-gray-900 py-8 px-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 border-2 border-indigo-200">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-6 border-2 border-indigo-200 dark:border-indigo-700">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-3">
               <Shield className="w-8 h-8 text-indigo-600" />
-              <h1 className="text-3xl font-bold text-neutral-900">Admin Console</h1>
+              <h1 className="text-3xl font-bold text-neutral-900 dark:text-white">Admin Console</h1>
             </div>
             <a
               href="/admin/exam-management"
@@ -206,30 +206,30 @@ export default function AdminPage() {
               Manage Exams
             </a>
           </div>
-          <p className="text-neutral-600">
+          <p className="text-neutral-600 dark:text-gray-400">
             Logged in as: <span className="font-semibold">{user?.email}</span>
           </p>
         </div>
 
         {/* Current Settings */}
         {currentSettings && (
-          <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 mb-6 border-2 border-indigo-200">
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+          <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-2xl p-6 mb-6 border-2 border-indigo-200 dark:border-indigo-700">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2 dark:text-white">
               <Bot className="w-5 h-5" />
               Current AI Model
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-white rounded-xl p-4 border-2 border-indigo-200">
-                <p className="text-sm text-neutral-600 mb-1">Model</p>
-                <p className="font-bold text-lg">{currentSettings.model_name}</p>
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border-2 border-indigo-200 dark:border-indigo-700">
+                <p className="text-sm text-neutral-600 dark:text-gray-400 mb-1">Model</p>
+                <p className="font-bold text-lg dark:text-white">{currentSettings.model_name}</p>
               </div>
-              <div className="bg-white rounded-xl p-4 border-2 border-indigo-200">
-                <p className="text-sm text-neutral-600 mb-1">Provider</p>
-                <p className="font-bold text-lg capitalize">{currentSettings.provider}</p>
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border-2 border-indigo-200 dark:border-indigo-700">
+                <p className="text-sm text-neutral-600 dark:text-gray-400 mb-1">Provider</p>
+                <p className="font-bold text-lg capitalize dark:text-white">{currentSettings.provider}</p>
               </div>
-              <div className="bg-white rounded-xl p-4 border-2 border-indigo-200">
-                <p className="text-sm text-neutral-600 mb-1">Combined Price</p>
-                <p className="font-bold text-lg">
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border-2 border-indigo-200 dark:border-indigo-700">
+                <p className="text-sm text-neutral-600 dark:text-gray-400 mb-1">Combined Price</p>
+                <p className="font-bold text-lg dark:text-white">
                   ${(currentSettings.input_price_per_million + currentSettings.output_price_per_million).toFixed(2)}/M tokens
                 </p>
               </div>
@@ -253,8 +253,8 @@ export default function AdminPage() {
         )}
 
         {/* Model Selection */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 border-2 border-neutral-200">
-          <h2 className="text-2xl font-bold mb-6">Select AI Model</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border-2 border-neutral-200 dark:border-gray-700">
+          <h2 className="text-2xl font-bold mb-6 dark:text-white">Select AI Model</h2>
 
           {/* OpenAI Models */}
           <div className="mb-8">
@@ -329,12 +329,12 @@ export default function AdminPage() {
         </div>
 
         {/* Re-analyze Existing Exams Section */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mt-6 border-2 border-neutral-200">
-          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mt-6 border-2 border-neutral-200 dark:border-gray-700">
+          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2 dark:text-white">
             <Sparkles className="w-6 h-6 text-purple-600" />
             Re-analyze Existing Exams
           </h2>
-          <p className="text-neutral-600 mb-6">
+          <p className="text-neutral-600 dark:text-gray-400 mb-6">
             Trigger AI analysis for exams that were uploaded before the AI feature was implemented.
           </p>
 
@@ -343,11 +343,11 @@ export default function AdminPage() {
               {exams.map((exam) => (
                 <div
                   key={exam.id}
-                  className="flex items-center justify-between p-4 border-2 border-neutral-200 rounded-xl hover:border-purple-300 transition-colors"
+                  className="flex items-center justify-between p-4 border-2 border-neutral-200 dark:border-gray-700 rounded-xl hover:border-purple-300 dark:hover:border-purple-600 transition-colors"
                 >
                   <div>
-                    <h3 className="font-semibold text-lg">{exam.name}</h3>
-                    <p className="text-sm text-neutral-600">
+                    <h3 className="font-semibold text-lg dark:text-white">{exam.name}</h3>
+                    <p className="text-sm text-neutral-600 dark:text-gray-400">
                       {exam.question_count || 0} questions
                     </p>
                   </div>
@@ -377,7 +377,7 @@ export default function AdminPage() {
               ))}
             </div>
           ) : (
-            <p className="text-neutral-500 italic">No exams found.</p>
+            <p className="text-neutral-500 dark:text-gray-500 italic">No exams found.</p>
           )}
         </div>
       </div>
@@ -396,14 +396,14 @@ function ModelCard({ model, isSelected, onSelect }: {
       className={cn(
         "p-4 rounded-xl border-2 transition-all duration-200 text-left",
         isSelected
-          ? "border-indigo-600 bg-indigo-50 shadow-lg"
-          : "border-neutral-300 bg-white hover:border-indigo-400 hover:shadow-md"
+          ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 shadow-lg"
+          : "border-neutral-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:border-indigo-400 dark:hover:border-indigo-500 hover:shadow-md"
       )}
     >
       <div className="flex items-start justify-between mb-2">
         <div>
-          <h4 className="font-bold text-lg">{model.name}</h4>
-          <p className="text-sm text-neutral-600 flex items-center gap-1">
+          <h4 className="font-bold text-lg dark:text-white">{model.name}</h4>
+          <p className="text-sm text-neutral-600 dark:text-gray-400 flex items-center gap-1">
             <Zap className="w-3 h-3" />
             {model.tier}
           </p>
@@ -417,19 +417,19 @@ function ModelCard({ model, isSelected, onSelect }: {
 
       <div className="space-y-1 text-sm">
         <div className="flex justify-between">
-          <span className="text-neutral-600">Input:</span>
-          <span className="font-semibold">${model.inputPricePerMillion}/M</span>
+          <span className="text-neutral-600 dark:text-gray-400">Input:</span>
+          <span className="font-semibold dark:text-white">${model.inputPricePerMillion}/M</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-neutral-600">Output:</span>
-          <span className="font-semibold">${model.outputPricePerMillion}/M</span>
+          <span className="text-neutral-600 dark:text-gray-400">Output:</span>
+          <span className="font-semibold dark:text-white">${model.outputPricePerMillion}/M</span>
         </div>
-        <div className="flex justify-between pt-1 border-t border-neutral-200">
-          <span className="text-neutral-600 flex items-center gap-1">
+        <div className="flex justify-between pt-1 border-t border-neutral-200 dark:border-gray-600">
+          <span className="text-neutral-600 dark:text-gray-400 flex items-center gap-1">
             <DollarSign className="w-3 h-3" />
             Total:
           </span>
-          <span className="font-bold text-indigo-600">${model.combinedPrice}/M</span>
+          <span className="font-bold text-indigo-600 dark:text-indigo-400">${model.combinedPrice}/M</span>
         </div>
       </div>
     </button>

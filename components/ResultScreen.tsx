@@ -54,7 +54,7 @@ export default function ResultScreen({
       <div className="mt-6 text-center">
         <button
           onClick={() => window.location.href = '/'}
-          className="inline-flex items-center gap-2 text-neutral-700 hover:text-indigo-600 font-medium transition-colors"
+          className="inline-flex items-center gap-2 text-neutral-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors"
         >
           <Home className="w-4 h-4" />
           Back to Home

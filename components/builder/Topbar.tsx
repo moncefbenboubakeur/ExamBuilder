@@ -50,20 +50,20 @@ export default function Topbar({
   };
 
   return (
-    <div className="sticky top-0 z-40 bg-white border-b border-neutral-200 shadow-sm">
+    <div className="sticky top-0 z-40 bg-white dark:bg-gray-800 border-b border-neutral-200 dark:border-gray-700 shadow-sm">
       <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
         {/* Left: Logo + Mobile Menu Toggle */}
         <div className="flex items-center gap-3 sm:gap-4">
           {/* Mobile menu toggle */}
           <button
             onClick={onMenuToggle}
-            className="lg:hidden p-2 rounded-lg hover:bg-neutral-100 transition-colors"
+            className="lg:hidden p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-gray-700 transition-colors"
             aria-label="Toggle menu"
           >
             {isMobileMenuOpen ? (
-              <X className="w-5 h-5 text-neutral-700" />
+              <X className="w-5 h-5 text-neutral-700 dark:text-gray-300" />
             ) : (
-              <Menu className="w-5 h-5 text-neutral-700" />
+              <Menu className="w-5 h-5 text-neutral-700 dark:text-gray-300" />
             )}
           </button>
 
@@ -77,13 +77,13 @@ export default function Topbar({
               <div className="absolute -bottom-1 -right-1 w-3 h-3 sm:w-3.5 sm:h-3.5 bg-sky-400 rounded transform rotate-12 shadow-sm"></div>
             </div>
             <div className="hidden sm:flex flex-col items-start">
-              <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 leading-none">
+              <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-white leading-none">
                 ExamBuilder
               </h1>
               <span className="text-xs text-indigo-600 font-semibold">.net</span>
             </div>
             <div className="sm:hidden">
-              <span className="text-lg font-bold text-neutral-900">ExamBuilder</span>
+              <span className="text-lg font-bold text-neutral-900 dark:text-white">ExamBuilder</span>
             </div>
           </button>
         </div>
@@ -104,7 +104,7 @@ export default function Topbar({
                 </span>
               </button>
               {lastSaved && (
-                <span className="hidden md:inline text-xs text-neutral-500">
+                <span className="hidden md:inline text-xs text-neutral-500 dark:text-gray-400">
                   {formatLastSaved()}
                 </span>
               )}
@@ -115,13 +115,13 @@ export default function Topbar({
           <div className="relative">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center gap-2 px-3 py-2 rounded-full bg-neutral-100 hover:bg-neutral-200 transition-colors"
+              className="flex items-center gap-2 px-3 py-2 rounded-full bg-neutral-100 dark:bg-gray-700 hover:bg-neutral-200 dark:hover:bg-gray-600 transition-colors"
               aria-label="User menu"
             >
               <div className="w-7 h-7 sm:w-8 sm:h-8 bg-indigo-600 rounded-full flex items-center justify-center">
                 <User className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               </div>
-              <span className="hidden sm:inline text-sm font-medium text-neutral-700 max-w-[150px] truncate">
+              <span className="hidden sm:inline text-sm font-medium text-neutral-700 dark:text-gray-300 max-w-[150px] truncate">
                 {userEmail}
               </span>
             </button>
@@ -133,9 +133,9 @@ export default function Topbar({
                   className="fixed inset-0 z-40"
                   onClick={() => setShowUserMenu(false)}
                 ></div>
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-neutral-200 py-2 z-50">
-                  <div className="px-4 py-2 border-b border-neutral-100">
-                    <p className="text-sm font-medium text-neutral-900 truncate">
+                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-neutral-200 dark:border-gray-700 py-2 z-50">
+                  <div className="px-4 py-2 border-b border-neutral-100 dark:border-gray-700">
+                    <p className="text-sm font-medium text-neutral-900 dark:text-white truncate">
                       {userEmail}
                     </p>
                   </div>
@@ -144,14 +144,14 @@ export default function Topbar({
                       setShowUserMenu(false);
                       router.push('/dashboard');
                     }}
-                    className="w-full px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-50 transition-colors flex items-center gap-2"
+                    className="w-full px-4 py-2 text-left text-sm text-neutral-700 dark:text-gray-300 hover:bg-neutral-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
                   >
                     <User className="w-4 h-4" />
                     Dashboard
                   </button>
                   <button
                     onClick={handleSignOut}
-                    className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
+                    className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center gap-2"
                   >
                     <LogOut className="w-4 h-4" />
                     Sign Out
