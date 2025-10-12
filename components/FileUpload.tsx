@@ -15,33 +15,58 @@ export default function FileUpload({ onUploadSuccess }: FileUploadProps) {
   const [success, setSuccess] = useState(false);
   const [questionCount, setQuestionCount] = useState<number | null>(null);
   const [scanning, setScanning] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+
+  const processFile = async (selectedFile: File) => {
+    if (selectedFile.name.endsWith('.md')) {
+      setFile(selectedFile);
+      setError(null);
+      setSuccess(false);
+      setScanning(true);
+      setQuestionCount(null);
+
+      // Read file content and count questions
+      try {
+        const content = await selectedFile.text();
+        const count = countQuestions(content);
+        setQuestionCount(count);
+      } catch (err) {
+        console.error('Error scanning file:', err);
+        setQuestionCount(null);
+      } finally {
+        setScanning(false);
+      }
+    } else {
+      setError('Please select a .md (Markdown) file');
+      setFile(null);
+      setQuestionCount(null);
+    }
+  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
-      if (selectedFile.name.endsWith('.md')) {
-        setFile(selectedFile);
-        setError(null);
-        setSuccess(false);
-        setScanning(true);
-        setQuestionCount(null);
+      await processFile(selectedFile);
+    }
+  };
 
-        // Read file content and count questions
-        try {
-          const content = await selectedFile.text();
-          const count = countQuestions(content);
-          setQuestionCount(count);
-        } catch (err) {
-          console.error('Error scanning file:', err);
-          setQuestionCount(null);
-        } finally {
-          setScanning(false);
-        }
-      } else {
-        setError('Please select a .md (Markdown) file');
-        setFile(null);
-        setQuestionCount(null);
-      }
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      await processFile(e.dataTransfer.files[0]);
     }
   };
 
@@ -92,7 +117,15 @@ export default function FileUpload({ onUploadSuccess }: FileUploadProps) {
         <div className="mb-4">
           <label
             htmlFor="file-upload"
-            className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-blue-500 dark:hover:border-blue-400 transition-colors"
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+            className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+              dragActive
+                ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                : 'border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400'
+            }`}
           >
             <div className="flex flex-col items-center justify-center pt-5 pb-6">
               <Upload className="w-10 h-10 mb-2 text-gray-400 dark:text-gray-500" />
