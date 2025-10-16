@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
+import { createAdminClient } from '@/lib/supabase-admin';
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,32 +23,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get the target user by email
-    const { data: users, error: userError } = await supabase
-      .from('auth.users')
-      .select('id')
-      .eq('email', targetUserEmail)
-      .single();
+    // Get the target user by email using RPC function
+    const { data: allUsers, error: userError } = await supabase
+      .rpc('get_all_users');
 
     if (userError) {
-      // Try with admin API if available, otherwise return error
+      return NextResponse.json(
+        { error: 'Failed to fetch users' },
+        { status: 500 }
+      );
+    }
+
+    const targetUser = allUsers?.find((u: { email: string }) => u.email === targetUserEmail);
+
+    if (!targetUser) {
       return NextResponse.json(
         { error: `User with email ${targetUserEmail} not found` },
         { status: 404 }
       );
     }
 
-    const targetUserId = users?.id;
+    const targetUserId = targetUser.id;
 
-    if (!targetUserId) {
-      return NextResponse.json(
-        { error: `User with email ${targetUserEmail} not found` },
-        { status: 404 }
-      );
-    }
+    // Use admin client to bypass RLS for copying exams
+    const adminClient = createAdminClient();
 
     // Get the original exam
-    const { data: exam, error: examError } = await supabase
+    const { data: exam, error: examError } = await adminClient
       .from('exams')
       .select('*')
       .eq('id', examId)
@@ -69,7 +71,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get all questions for this exam
-    const { data: questions, error: questionsError } = await supabase
+    const { data: questions, error: questionsError } = await adminClient
       .from('questions')
       .select('*')
       .eq('exam_id', examId)
@@ -82,8 +84,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create a new exam for the target user
-    const { data: newExam, error: newExamError } = await supabase
+    // Create a new exam for the target user (using admin client to bypass RLS)
+    const { data: newExam, error: newExamError } = await adminClient
       .from('exams')
       .insert({
         user_id: targetUserId,
@@ -96,6 +98,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (newExamError || !newExam) {
+      console.error('Error creating new exam:', newExamError);
       return NextResponse.json(
         { error: 'Failed to create new exam' },
         { status: 500 }
@@ -114,13 +117,13 @@ export async function POST(request: NextRequest) {
         has_illustration: q.has_illustration,
       }));
 
-      const { error: insertQuestionsError } = await supabase
+      const { error: insertQuestionsError } = await adminClient
         .from('questions')
         .insert(newQuestions);
 
       if (insertQuestionsError) {
         // Rollback: delete the exam if questions failed
-        await supabase.from('exams').delete().eq('id', newExam.id);
+        await adminClient.from('exams').delete().eq('id', newExam.id);
         return NextResponse.json(
           { error: 'Failed to copy questions' },
           { status: 500 }

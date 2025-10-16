@@ -80,7 +80,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-sky-50 to-blue-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-sky-50 to-blue-50 flex items-center justify-center px-4 py-8 sm:py-12">
       <div className="max-w-md w-full">
         <div className="bg-white rounded-2xl border-2 border-neutral-200 shadow-xl p-8">
           {/* Header */}

@@ -115,7 +115,7 @@ function ResultsContent() {
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-gray-900">
-      <div className="py-12 px-4">
+      <div id="main-content" className="py-12 px-4">
         <ResultScreen
           totalQuestions={results.totalQuestions}
           correctCount={results.correctCount}

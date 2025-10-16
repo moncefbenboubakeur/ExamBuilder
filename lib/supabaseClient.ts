@@ -53,6 +53,8 @@ export type ExamSession = {
   correct_count: number;
   wrong_count: number;
   elapsed_time: number;
+  shuffled_question_order: string[] | null;
+  shuffled_options_map: Record<string, Record<string, string>> | null;
 };
 
 export type ExamAnswer = {
@@ -95,4 +97,12 @@ export type StudyProgressStatistics = {
     topic_name: string;
     visited_at: string;
   } | null;
+};
+
+export type UserPreferences = {
+  user_id: string;
+  shuffle_questions: boolean;
+  shuffle_options: boolean;
+  created_at: string;
+  updated_at: string;
 };

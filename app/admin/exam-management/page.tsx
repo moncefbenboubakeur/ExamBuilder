@@ -113,6 +113,9 @@ export default function ExamManagement() {
       setMessage(data.message);
       setTargetEmail('');
       setSelectedExamId(null);
+
+      // Refresh the user exams list
+      await fetchExams();
     } catch (err) {
       console.error('Error copying exam:', err);
       setError(err instanceof Error ? err.message : 'Failed to copy exam');

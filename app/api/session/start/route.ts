@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
+import { createShuffleData } from '@/lib/shuffleUtils';
+import { Question } from '@/lib/supabaseClient';
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,7 +38,39 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Create a new exam session
+    // Fetch user preferences for shuffle settings
+    const { data: preferences } = await supabase
+      .from('user_preferences')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
+
+    // Default to both shuffles enabled if no preferences found
+    const shuffleQuestions = preferences?.shuffle_questions ?? true;
+    const shuffleOptions = preferences?.shuffle_options ?? true;
+
+    // Fetch all questions for the exam to apply shuffle logic
+    const { data: questions, error: questionsError } = await supabase
+      .from('questions')
+      .select('*')
+      .eq('exam_id', examId)
+      .order('question_number', { ascending: true });
+
+    if (questionsError || !questions) {
+      return NextResponse.json(
+        { error: 'Failed to fetch questions for shuffle' },
+        { status: 500 }
+      );
+    }
+
+    // Create shuffle data based on user preferences
+    const { shuffledQuestionOrder, shuffledOptionsMap } = createShuffleData(
+      questions as Question[],
+      shuffleQuestions,
+      shuffleOptions
+    );
+
+    // Create a new exam session with shuffle data
     const { data: session, error: sessionError } = await supabase
       .from('exam_sessions')
       .insert({
@@ -47,6 +81,8 @@ export async function POST(request: NextRequest) {
         score: 0,
         correct_count: 0,
         wrong_count: 0,
+        shuffled_question_order: shuffledQuestionOrder,
+        shuffled_options_map: shuffledOptionsMap,
       })
       .select()
       .single();

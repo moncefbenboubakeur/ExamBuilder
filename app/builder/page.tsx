@@ -123,7 +123,7 @@ export default function ExamBuilderPage() {
       />
 
       {/* Main Layout */}
-      <div className="flex h-[calc(100vh-73px)]">
+      <div id="main-content" className="flex h-[calc(100vh-73px)]">
         {/* Sidebar */}
         <Sidebar
           currentStep={currentStep}

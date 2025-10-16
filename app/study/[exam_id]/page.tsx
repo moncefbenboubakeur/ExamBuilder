@@ -220,7 +220,7 @@ export default function StudyPage({ params }: { params: Promise<{ exam_id: strin
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
+      <div id="main-content" className="flex-1 flex overflow-hidden">
         <StudySidebar
           topics={courseData.topics}
           currentTopicIndex={currentTopicIndex}

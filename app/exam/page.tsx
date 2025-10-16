@@ -8,6 +8,7 @@ import QuestionCard from '@/components/QuestionCard';
 import ExamProgress from '@/components/ExamProgress';
 import ExamTimer from '@/components/ExamTimer';
 import { isAnswerCorrect } from '@/lib/examLogic';
+import { applyShuffle, applyOptionShuffleToQuestion } from '@/lib/shuffleUtils';
 import { X, ChevronLeft, ChevronRight, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -22,6 +23,10 @@ function ExamContent() {
   const [answers, setAnswers] = useState<Map<string, string>>(new Map());
   const [multiAnswers, setMultiAnswers] = useState<Map<string, string[]>>(new Map());
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [shuffleData, setShuffleData] = useState<{
+    shuffledQuestionOrder: string[] | null;
+    shuffledOptionsMap: Record<string, Record<string, string>> | null;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
   const [transitioning, setTransitioning] = useState(false);
@@ -54,20 +59,26 @@ function ExamContent() {
       });
 
       if (data.questions && data.questions.length > 0) {
-        setQuestions(data.questions);
-
         const targetExamId = examId || data.questions[0]?.exam_id;
         const { data: existingSessions } = await supabase
           .from('exam_sessions')
-          .select('id')
+          .select('id, shuffled_question_order, shuffled_options_map')
           .eq('exam_id', targetExamId)
           .eq('completed', false)
           .order('created_at', { ascending: false })
           .limit(1);
 
+        let sessionShuffleData = null;
+
         if (existingSessions && existingSessions.length > 0) {
+          // Use existing session
           setSessionId(existingSessions[0].id);
+          sessionShuffleData = {
+            shuffledQuestionOrder: existingSessions[0].shuffled_question_order,
+            shuffledOptionsMap: existingSessions[0].shuffled_options_map,
+          };
         } else {
+          // Create new session
           const sessionResponse = await fetch('/api/session/start', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -80,8 +91,21 @@ function ExamContent() {
           const sessionData = await sessionResponse.json();
           if (sessionData.success) {
             setSessionId(sessionData.session.id);
+            sessionShuffleData = {
+              shuffledQuestionOrder: sessionData.session.shuffled_question_order,
+              shuffledOptionsMap: sessionData.session.shuffled_options_map,
+            };
           }
         }
+
+        // Apply shuffle to questions if needed
+        let processedQuestions = data.questions;
+        if (sessionShuffleData?.shuffledQuestionOrder) {
+          processedQuestions = applyShuffle(data.questions, sessionShuffleData.shuffledQuestionOrder);
+        }
+
+        setQuestions(processedQuestions);
+        setShuffleData(sessionShuffleData);
       } else {
         router.push('/');
       }
@@ -261,10 +285,15 @@ function ExamContent() {
   const totalAnswered = answers.size + multiAnswers.size;
   const canFinish = totalAnswered === questions.length;
 
+  // Apply option shuffle to current question if needed
+  const displayQuestion = shuffleData?.shuffledOptionsMap
+    ? applyOptionShuffleToQuestion(currentQuestion, shuffleData.shuffledOptionsMap)
+    : currentQuestion;
+
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-gray-900">
       {/* Top Navigation Bar */}
-      <div className="sticky top-0 z-40 bg-white dark:bg-gray-800 border-b border-neutral-200 dark:border-gray-700 shadow-sm">
+      <div id="main-content" className="sticky top-0 z-40 bg-white dark:bg-gray-800 border-b border-neutral-200 dark:border-gray-700 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <button
@@ -295,7 +324,7 @@ function ExamContent() {
       <div className="py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           <QuestionCard
-            question={currentQuestion}
+            question={displayQuestion}
             questionNumber={currentIndex + 1}
             selectedAnswer={selectedAnswer}
             selectedAnswers={selectedAnswersForQuestion}

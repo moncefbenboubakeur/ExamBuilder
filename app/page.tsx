@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import FileUpload from '@/components/FileUpload';
-import { BookOpen, Play, History, FileText, Star, Hash, Plus, Sparkles, Share2, Users, GraduationCap } from 'lucide-react';
+import { BookOpen, Play, History, FileText, Star, Hash, Plus, Sparkles, Share2, Users, GraduationCap, Settings, Trash2 } from 'lucide-react';
 import { supabase, ExamWithSharing } from '@/lib/supabaseClient';
 import { cn } from '@/lib/utils';
 import ShareExamModal from '@/components/share/ShareExamModal';
@@ -16,6 +16,9 @@ export default function Home() {
   const [authChecked, setAuthChecked] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [selectedExam, setSelectedExam] = useState<{ id: string; name: string } | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [examToDelete, setExamToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchExams = useCallback(async () => {
     try {
@@ -83,6 +86,37 @@ export default function Home() {
     fetchExams();
   };
 
+  const handleDeleteExam = (examId: string, examName: string) => {
+    setExamToDelete({ id: examId, name: examName });
+    setDeleteConfirmOpen(true);
+  };
+
+  const confirmDeleteExam = async () => {
+    if (!examToDelete) return;
+
+    setDeleting(true);
+    try {
+      const response = await fetch(`/api/exams/${examToDelete.id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        // Refresh exam list
+        await fetchExams();
+        setDeleteConfirmOpen(false);
+        setExamToDelete(null);
+      } else {
+        const data = await response.json();
+        alert(`Failed to delete exam: ${data.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error deleting exam:', error);
+      alert('Failed to delete exam. Please try again.');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   if (!authChecked || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-gray-900">
@@ -96,7 +130,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-gray-900">
-      <div className="py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
+      <div id="main-content" className="py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           {/* Hero Section */}
           <div className="text-center mb-8 sm:mb-12">
@@ -189,7 +223,7 @@ export default function Home() {
                     'group grid grid-rows-[auto_minmax(3rem,auto)_auto_auto] gap-3'
                   )}
                 >
-                  {/* Row 1: Title, Badges, and Share Button - auto height with min-height */}
+                  {/* Row 1: Title, Badges, and Action Icons - auto height with min-height */}
                   <div className="flex items-start justify-between min-h-[3rem]">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2 flex-wrap">
@@ -210,19 +244,46 @@ export default function Home() {
                         )}
                       </div>
                     </div>
-                    {/* Share button - only for owned exams */}
-                    {user && exam.user_id === user.id && !exam.is_sample && (
+                    {/* Action Icons */}
+                    <div className="flex items-center gap-1 ml-2">
+                      {/* Preferences/Settings button - always visible */}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleShareExam(exam.id, exam.name);
+                          router.push('/preferences');
                         }}
-                        className="ml-2 p-2 text-neutral-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900 rounded-lg transition-colors"
-                        title="Share this exam"
+                        className="p-2 text-neutral-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900 rounded-lg transition-colors"
+                        title="Exam preferences (shuffle settings)"
                       >
-                        <Share2 className="w-5 h-5" />
+                        <Settings className="w-5 h-5" />
                       </button>
-                    )}
+                      {/* Share button - only for owned exams */}
+                      {user && exam.user_id === user.id && !exam.is_sample && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleShareExam(exam.id, exam.name);
+                          }}
+                          className="p-2 text-neutral-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900 rounded-lg transition-colors"
+                          title="Share this exam"
+                        >
+                          <Share2 className="w-5 h-5" />
+                        </button>
+                      )}
+                      {/* Delete button - only for owned, non-sample exams */}
+                      {user && exam.user_id === user.id && !exam.is_sample && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteExam(exam.id, exam.name);
+                          }}
+                          className="p-2 text-neutral-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                          title="Delete this exam"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* Row 2: Description - fixed height with line-clamp */}
@@ -329,6 +390,56 @@ export default function Home() {
           }}
           onShareSuccess={handleShareSuccess}
         />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmOpen && examToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50 px-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-md w-full p-6 sm:p-8 animate-fadeIn">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+                <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
+              </div>
+              <h3 className="text-2xl font-bold text-neutral-900 dark:text-white">Delete Exam?</h3>
+            </div>
+            <p className="text-neutral-600 dark:text-gray-300 mb-2">
+              Are you sure you want to delete{' '}
+              <strong className="text-neutral-900 dark:text-white">&quot;{examToDelete.name}&quot;</strong>?
+            </p>
+            <p className="text-sm text-red-600 dark:text-red-400 mb-6">
+              ⚠️ This will permanently delete the exam and all its questions. This action cannot be undone.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={() => {
+                  setDeleteConfirmOpen(false);
+                  setExamToDelete(null);
+                }}
+                disabled={deleting}
+                className="flex-1 px-5 py-3 bg-white dark:bg-gray-700 border-2 border-neutral-200 dark:border-gray-600 text-neutral-700 dark:text-gray-300 rounded-2xl font-medium hover:border-neutral-300 dark:hover:border-gray-500 hover:bg-neutral-50 dark:hover:bg-gray-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteExam}
+                disabled={deleting}
+                className="flex-1 px-5 py-3 bg-red-600 text-white rounded-2xl font-medium hover:bg-red-700 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {deleting ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-5 h-5" />
+                    Delete Exam
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

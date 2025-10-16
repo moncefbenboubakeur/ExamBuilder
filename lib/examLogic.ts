@@ -70,12 +70,23 @@ export function getRetryQuestions(
 
 /**
  * Check if answer is correct
+ * Handles both single answers and multiple choice (comma-separated)
  */
 export function isAnswerCorrect(
   question: Question,
   selectedAnswer: string
 ): boolean {
-  return selectedAnswer.toUpperCase() === question.correct_answer.toUpperCase();
+  const correctAnswer = question.correct_answer.toUpperCase().trim();
+  const userAnswer = selectedAnswer.toUpperCase().trim();
+
+  // Handle multiple choice answers (sort before comparing)
+  if (correctAnswer.includes(',') || userAnswer.includes(',')) {
+    const correctSet = correctAnswer.split(',').map(a => a.trim()).sort().join(',');
+    const userSet = userAnswer.split(',').map(a => a.trim()).sort().join(',');
+    return correctSet === userSet;
+  }
+
+  return userAnswer === correctAnswer;
 }
 
 /**

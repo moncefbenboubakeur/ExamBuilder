@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
+import { reverseMapAnswer } from '@/lib/shuffleUtils';
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,6 +25,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Fetch session to get shuffle mapping (if any)
+    const { data: session } = await supabase
+      .from('exam_sessions')
+      .select('shuffled_options_map')
+      .eq('id', sessionId)
+      .single();
+
+    // If options were shuffled, reverse-map the answer back to original
+    let answerToStore = selectedAnswer;
+    if (session?.shuffled_options_map && session.shuffled_options_map[questionId]) {
+      answerToStore = reverseMapAnswer(
+        selectedAnswer,
+        session.shuffled_options_map[questionId]
+      );
+    }
+
     // Check if answer already exists for this question in this session
     const { data: existing } = await supabase
       .from('exam_answers')
@@ -35,11 +52,11 @@ export async function POST(request: NextRequest) {
     let result;
 
     if (existing) {
-      // Update existing answer
+      // Update existing answer (store original answer, not shuffled)
       const { data, error } = await supabase
         .from('exam_answers')
         .update({
-          selected_answer: selectedAnswer,
+          selected_answer: answerToStore,
           is_correct: isCorrect,
         })
         .eq('id', existing.id)
@@ -56,13 +73,13 @@ export async function POST(request: NextRequest) {
 
       result = data;
     } else {
-      // Insert new answer
+      // Insert new answer (store original answer, not shuffled)
       const { data, error } = await supabase
         .from('exam_answers')
         .insert({
           session_id: sessionId,
           question_id: questionId,
-          selected_answer: selectedAnswer,
+          selected_answer: answerToStore,
           is_correct: isCorrect,
         })
         .select()
