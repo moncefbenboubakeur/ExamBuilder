@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase-server';
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
@@ -21,7 +21,7 @@ export async function DELETE(
       );
     }
 
-    const examId = params.id;
+    const { id: examId } = await params;
 
     // Verify the exam exists and belongs to the user
     const { data: exam, error: examError } = await supabase
