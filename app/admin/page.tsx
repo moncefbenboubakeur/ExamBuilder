@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { AI_MODELS, AIModel } from '@/lib/ai-models';
-import { Shield, Bot, Check, DollarSign, Zap, AlertCircle, RefreshCw, Sparkles } from 'lucide-react';
+import { Shield, Bot, Check, DollarSign, Zap, AlertCircle, RefreshCw, Sparkles, FlaskConical } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import TestModelModal from '@/components/TestModelModal';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,6 +36,7 @@ export default function AdminPage() {
   const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
   const [exams, setExams] = useState<Array<{ id: string; name: string; question_count: number }>>([]);
   const [reanalyzing, setReanalyzing] = useState<string | null>(null);
+  const [testingModel, setTestingModel] = useState<AIModel | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -266,6 +268,7 @@ export default function AdminPage() {
                   model={model}
                   isSelected={selectedModel?.id === model.id}
                   onSelect={() => setSelectedModel(model)}
+                  onTest={() => setTestingModel(model)}
                 />
               ))}
             </div>
@@ -281,6 +284,7 @@ export default function AdminPage() {
                   model={model}
                   isSelected={selectedModel?.id === model.id}
                   onSelect={() => setSelectedModel(model)}
+                  onTest={() => setTestingModel(model)}
                 />
               ))}
             </div>
@@ -296,6 +300,7 @@ export default function AdminPage() {
                   model={model}
                   isSelected={selectedModel?.id === model.id}
                   onSelect={() => setSelectedModel(model)}
+                  onTest={() => setTestingModel(model)}
                 />
               ))}
             </div>
@@ -381,57 +386,80 @@ export default function AdminPage() {
           )}
         </div>
       </div>
+
+      {/* Test Model Modal */}
+      {testingModel && (
+        <TestModelModal
+          model={testingModel}
+          onClose={() => setTestingModel(null)}
+        />
+      )}
     </div>
   );
 }
 
-function ModelCard({ model, isSelected, onSelect }: {
+function ModelCard({ model, isSelected, onSelect, onTest }: {
   model: AIModel;
   isSelected: boolean;
   onSelect: () => void;
+  onTest: () => void;
 }) {
   return (
-    <button
+    <div
       onClick={onSelect}
       className={cn(
-        "p-4 rounded-xl border-2 transition-all duration-200 text-left",
+        "p-4 rounded-xl border-2 transition-all duration-200 relative cursor-pointer",
         isSelected
           ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 shadow-lg"
           : "border-neutral-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:border-indigo-400 dark:hover:border-indigo-500 hover:shadow-md"
       )}
     >
-      <div className="flex items-start justify-between mb-2">
-        <div>
-          <h4 className="font-bold text-lg dark:text-white">{model.name}</h4>
-          <p className="text-sm text-neutral-600 dark:text-gray-400 flex items-center gap-1">
-            <Zap className="w-3 h-3" />
-            {model.tier}
-          </p>
-        </div>
-        {isSelected && (
-          <div className="bg-indigo-600 rounded-full p-1">
-            <Check className="w-4 h-4 text-white" />
+      <div className="w-full">
+        <div className="flex items-start justify-between mb-2">
+          <div>
+            <h4 className="font-bold text-lg dark:text-white">{model.name}</h4>
+            <p className="text-sm text-neutral-600 dark:text-gray-400 flex items-center gap-1">
+              <Zap className="w-3 h-3" />
+              {model.tier}
+            </p>
           </div>
-        )}
-      </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onTest();
+              }}
+              className="p-1.5 rounded-lg bg-neutral-100 dark:bg-gray-600 hover:bg-indigo-100 dark:hover:bg-indigo-700 transition-colors group"
+              title="Test this model"
+            >
+              <FlaskConical className="w-4 h-4 text-neutral-600 dark:text-gray-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400" />
+            </button>
+            {isSelected && (
+              <div className="bg-indigo-600 rounded-full p-1">
+                <Check className="w-4 h-4 text-white" />
+              </div>
+            )}
+          </div>
+        </div>
 
-      <div className="space-y-1 text-sm">
-        <div className="flex justify-between">
-          <span className="text-neutral-600 dark:text-gray-400">Input:</span>
-          <span className="font-semibold dark:text-white">${model.inputPricePerMillion}/M</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-neutral-600 dark:text-gray-400">Output:</span>
-          <span className="font-semibold dark:text-white">${model.outputPricePerMillion}/M</span>
-        </div>
-        <div className="flex justify-between pt-1 border-t border-neutral-200 dark:border-gray-600">
-          <span className="text-neutral-600 dark:text-gray-400 flex items-center gap-1">
-            <DollarSign className="w-3 h-3" />
-            Total:
-          </span>
-          <span className="font-bold text-indigo-600 dark:text-indigo-400">${model.combinedPrice}/M</span>
+        <div className="space-y-1 text-sm">
+          <div className="flex justify-between">
+            <span className="text-neutral-600 dark:text-gray-400">Input:</span>
+            <span className="font-semibold dark:text-white">${model.inputPricePerMillion}/M</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-neutral-600 dark:text-gray-400">Output:</span>
+            <span className="font-semibold dark:text-white">${model.outputPricePerMillion}/M</span>
+          </div>
+          <div className="flex justify-between pt-1 border-t border-neutral-200 dark:border-gray-600">
+            <span className="text-neutral-600 dark:text-gray-400 flex items-center gap-1">
+              <DollarSign className="w-3 h-3" />
+              Total:
+            </span>
+            <span className="font-bold text-indigo-600 dark:text-indigo-400">${model.combinedPrice}/M</span>
+          </div>
         </div>
       </div>
-    </button>
+    </div>
   );
 }
