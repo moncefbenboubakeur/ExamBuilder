@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { AI_MODELS, AIModel } from '@/lib/ai-models';
-import { Shield, Bot, Check, DollarSign, Zap, AlertCircle, RefreshCw, Sparkles, FlaskConical, Beaker } from 'lucide-react';
+import { Shield, Bot, Check, DollarSign, Zap, AlertCircle, RefreshCw, Sparkles, FlaskConical, Beaker, Trash2, Users, XCircle, UserX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import TestModelModal from '@/components/TestModelModal';
 import TestAllModelsModal from '@/components/TestAllModelsModal';
@@ -39,6 +39,10 @@ export default function AdminPage() {
   const [reanalyzing, setReanalyzing] = useState<string | null>(null);
   const [testingModel, setTestingModel] = useState<AIModel | null>(null);
   const [showTestAllModal, setShowTestAllModal] = useState(false);
+  const [deletingCourse, setDeletingCourse] = useState<string | null>(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteForAll, setDeleteForAll] = useState(false);
+  const [examToDeleteCourse, setExamToDeleteCourse] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -126,6 +130,54 @@ export default function AdminPage() {
       setMessage({ type: 'error', text: `Failed: ${error instanceof Error ? error.message : String(error)}` });
     } finally {
       setReanalyzing(null);
+    }
+  }
+
+  async function handleDeleteCourse(examId: string, examName: string) {
+    setExamToDeleteCourse({ id: examId, name: examName });
+    setDeleteModalOpen(true);
+  }
+
+  async function confirmDeleteCourse() {
+    if (!examToDeleteCourse) return;
+
+    setDeletingCourse(examToDeleteCourse.id);
+    setMessage(null);
+
+    try {
+      const response = await fetch('/api/admin/delete-course', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          examId: examToDeleteCourse.id,
+          deleteForAll
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setMessage({
+          type: 'success',
+          text: data.message
+        });
+        // Clear the modal
+        setDeleteModalOpen(false);
+        setExamToDeleteCourse(null);
+        setDeleteForAll(false);
+      } else {
+        setMessage({
+          type: 'error',
+          text: data.error || 'Failed to delete course'
+        });
+      }
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: `Failed: ${error instanceof Error ? error.message : String(error)}`
+      });
+    } finally {
+      setDeletingCourse(null);
     }
   }
 
@@ -361,34 +413,79 @@ export default function AdminPage() {
                   key={exam.id}
                   className="flex items-center justify-between p-4 border-2 border-neutral-200 dark:border-gray-700 rounded-xl hover:border-purple-300 dark:hover:border-purple-600 transition-colors"
                 >
-                  <div>
+                  <div className="flex-1">
                     <h3 className="font-semibold text-lg dark:text-white">{exam.name}</h3>
                     <p className="text-sm text-neutral-600 dark:text-gray-400">
                       {exam.question_count || 0} questions
                     </p>
                   </div>
-                  <button
-                    onClick={() => handleReanalyzeExam(exam.id)}
-                    disabled={reanalyzing === exam.id}
-                    className={cn(
-                      "px-6 py-3 rounded-xl font-medium transition-all duration-200 flex items-center gap-2",
-                      reanalyzing === exam.id
-                        ? "bg-neutral-300 text-neutral-500 cursor-not-allowed"
-                        : "bg-purple-600 text-white hover:bg-purple-700 shadow-md hover:shadow-lg"
-                    )}
-                  >
-                    {reanalyzing === exam.id ? (
-                      <>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleReanalyzeExam(exam.id)}
+                      disabled={reanalyzing === exam.id}
+                      className={cn(
+                        "px-6 py-3 rounded-xl font-medium transition-all duration-200 flex items-center gap-2",
+                        reanalyzing === exam.id
+                          ? "bg-neutral-300 text-neutral-500 cursor-not-allowed"
+                          : "bg-purple-600 text-white hover:bg-purple-700 shadow-md hover:shadow-lg"
+                      )}
+                    >
+                      {reanalyzing === exam.id ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          Analyzing...
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="w-4 h-4" />
+                          Analyze with AI
+                        </>
+                      )}
+                    </button>
+
+                    {/* Delete Course Buttons */}
+                    <button
+                      onClick={() => {
+                        setDeleteForAll(false);
+                        handleDeleteCourse(exam.id, exam.name);
+                      }}
+                      disabled={deletingCourse === exam.id}
+                      className={cn(
+                        "px-4 py-3 rounded-xl font-medium transition-all duration-200 flex items-center gap-2",
+                        deletingCourse === exam.id
+                          ? "bg-neutral-300 text-neutral-500 cursor-not-allowed"
+                          : "bg-orange-600 text-white hover:bg-orange-700 shadow-md hover:shadow-lg"
+                      )}
+                      title="Delete course for this exam only"
+                    >
+                      {deletingCourse === exam.id ? (
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        Analyzing...
-                      </>
-                    ) : (
-                      <>
-                        <RefreshCw className="w-4 h-4" />
-                        Analyze with AI
-                      </>
-                    )}
-                  </button>
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
+                      )}
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setDeleteForAll(true);
+                        handleDeleteCourse(exam.id, exam.name);
+                      }}
+                      disabled={deletingCourse === exam.id}
+                      className={cn(
+                        "px-4 py-3 rounded-xl font-medium transition-all duration-200 flex items-center gap-2",
+                        deletingCourse === exam.id
+                          ? "bg-neutral-300 text-neutral-500 cursor-not-allowed"
+                          : "bg-red-600 text-white hover:bg-red-700 shadow-md hover:shadow-lg"
+                      )}
+                      title="Delete course for ALL users with same exam"
+                    >
+                      {deletingCourse === exam.id ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      ) : (
+                        <Users className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -412,6 +509,76 @@ export default function AdminPage() {
           models={AI_MODELS}
           onClose={() => setShowTestAllModal(false)}
         />
+      )}
+
+      {/* Delete Course Confirmation Modal */}
+      {deleteModalOpen && examToDeleteCourse && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 max-w-md w-full mx-4">
+            <h3 className="text-xl font-bold mb-4 dark:text-white">
+              {deleteForAll ? 'Delete Course for All Users' : 'Delete Course for Admin Only'}
+            </h3>
+
+            <div className="mb-6 space-y-3">
+              <p className="text-neutral-700 dark:text-gray-300">
+                Are you sure you want to delete the course for:
+              </p>
+              <p className="font-semibold text-lg dark:text-white">
+                "{examToDeleteCourse.name}"
+              </p>
+
+              {deleteForAll ? (
+                <div className="p-3 bg-red-50 dark:bg-red-900/30 border-2 border-red-200 dark:border-red-700 rounded-lg">
+                  <p className="text-red-800 dark:text-red-300 text-sm">
+                    <strong>Warning:</strong> This will delete the course for ALL users who have an exam with the same name and question count. This action cannot be undone.
+                  </p>
+                </div>
+              ) : (
+                <div className="p-3 bg-orange-50 dark:bg-orange-900/30 border-2 border-orange-200 dark:border-orange-700 rounded-lg">
+                  <p className="text-orange-800 dark:text-orange-300 text-sm">
+                    This will delete the course only for this specific exam (admin only). Other users' courses will not be affected.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setDeleteModalOpen(false);
+                  setExamToDeleteCourse(null);
+                  setDeleteForAll(false);
+                }}
+                className="px-6 py-2 border-2 border-neutral-300 dark:border-gray-600 text-neutral-700 dark:text-gray-300 rounded-lg hover:bg-neutral-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteCourse}
+                disabled={!!deletingCourse}
+                className={cn(
+                  "px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2",
+                  deleteForAll
+                    ? "bg-red-600 text-white hover:bg-red-700"
+                    : "bg-orange-600 text-white hover:bg-orange-700",
+                  deletingCourse && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                {deletingCourse ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    Delete Course
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

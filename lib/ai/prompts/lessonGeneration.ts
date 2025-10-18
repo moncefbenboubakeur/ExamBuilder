@@ -16,17 +16,10 @@ export interface LessonGenerationInput {
 export function buildLessonGenerationPrompt(input: LessonGenerationInput): string {
   const { topicName, concepts, questions } = input;
 
-  // Build question context (without revealing answers in the lesson)
-  const questionContext = questions.map(q => {
-    const optionsText = Object.entries(q.options)
-      .map(([key, value]) => `  ${key}. ${value}`)
-      .join('\n');
-
-    return `Question: ${q.question_text}
-Options:
-${optionsText}
-Correct: ${q.correct_answer || 'Not specified'}`;
-  }).join('\n\n---\n\n');
+  // Build minimal question context WITHOUT actual question text to prevent content leakage
+  // We only provide the pattern of correct answers to help identify common misconceptions
+  const answerPatterns = questions.map(q => q.correct_answer || 'N/A').join(', ');
+  const questionCount = questions.length;
 
   return `You are a master instructor who writes compact, practical study notes that teach underlying concepts and help students avoid common mistakes.
 
@@ -35,18 +28,20 @@ TOPIC: ${topicName}
 KEY CONCEPTS TO COVER:
 ${concepts.map(c => `- ${c}`).join('\n')}
 
-RELATED EXAM QUESTIONS (for context only - DO NOT quote or paraphrase these in your output):
-${questionContext}
+QUESTION STATISTICS:
+- Number of questions on this topic: ${questionCount}
+- Answer distribution: ${answerPatterns}
 
 YOUR TASK:
 Generate a concise, educational lesson in Markdown format (≤500 words) that teaches the concepts tested in this topic.
 
 CRITICAL REQUIREMENTS:
-1. DO NOT copy, quote, or paraphrase any exam question text
-2. Instead, teach the UNDERLYING CONCEPTS that would help answer these types of questions
-3. Derive "Common Traps & Misconceptions" by analyzing patterns in the WRONG options (distractors)
-4. Use generalized examples and analogies, NOT the specific exam scenarios
+1. DO NOT include any specific exam content, questions, or scenarios
+2. Teach ONLY the UNDERLYING CONCEPTS and general principles
+3. Use your knowledge of the topic to identify common misconceptions
+4. Create your own original examples and analogies
 5. Keep it actionable and concise - no fluff
+6. NEVER reference or hint at specific exam questions
 
 REQUIRED MARKDOWN STRUCTURE:
 # ${topicName}

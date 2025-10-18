@@ -15,6 +15,7 @@ import {
 } from '@/lib/ai/prompts/lessonGeneration';
 import { upsertTopics, upsertCourseSections, checkCourseExists } from '@/lib/course/persist';
 import { detectExamLeakage } from '@/lib/course/leakageDetection';
+import { QuestionAssignmentTracker } from '@/lib/course/QuestionAssignmentTracker';
 
 const REGEN_WINDOW_MINUTES = process.env.NODE_ENV === 'production' ? 1 : 0;
 const TOPIC_DETECTION_TIMEOUT = 120000; // 120 seconds (2 minutes) for large exams
@@ -28,11 +29,14 @@ function logStep(step: string, data?: unknown) {
 
 function logError(step: string, error: unknown) {
   const timestamp = new Date().toISOString();
-  console.error(`[${timestamp}] ❌ ${step}`, {
+  const errorDetails = {
     message: error instanceof Error ? error.message : String(error),
     stack: error instanceof Error ? error.stack : undefined,
     details: error
-  });
+  };
+  console.error(`[${timestamp}] ❌ ${step}`,
+    typeof errorDetails === 'object' ? JSON.stringify(errorDetails, null, 2) : errorDetails
+  );
 }
 
 export async function POST(request: NextRequest) {
@@ -157,6 +161,11 @@ export async function POST(request: NextRequest) {
 
     logStep(`✅ Found ${questions.length} questions`, { exam_id, questionCount: questions.length });
 
+    // Initialize question assignment tracker
+    const questionIds = questions.map(q => q.id);
+    const tracker = new QuestionAssignmentTracker(questionIds);
+    logStep(`📊 Initialized tracker for ${questionIds.length} questions`);
+
     // STEP 1: Topic Detection
     logStep('🎯 Starting topic detection', { provider: settings.provider, model: settings.model_name });
     const topicStartTime = Date.now();
@@ -168,7 +177,7 @@ export async function POST(request: NextRequest) {
       if (questions.length > 100) {
         logStep(`📦 Large exam detected (${questions.length} questions), processing in batches`);
 
-        const BATCH_SIZE = 75; // Increased batch size to reduce API calls
+        const BATCH_SIZE = 40; // Reduced batch size for reliability
         const batches: QuestionForTopicDetection[][] = [];
 
         for (let i = 0; i < questions.length; i += BATCH_SIZE) {
@@ -177,9 +186,33 @@ export async function POST(request: NextRequest) {
 
         logStep(`📊 Created ${batches.length} batches of ~${BATCH_SIZE} questions each`);
 
-        // Process first batch to get initial topics
+        // Process first batch to get initial topics - use simplified format
         logStep(`🔍 Processing batch 1/${batches.length} (${batches[0].length} questions)`);
-        const firstBatchPrompt = buildTopicDetectionPrompt(batches[0]);
+
+        // Simplify first batch to prevent timeout
+        const simplifiedFirstBatch = batches[0].map(q => ({
+          id: q.id,
+          text: q.question_text.substring(0, 200) + (q.question_text.length > 200 ? '...' : ''),
+          correct: q.correct_answer || 'N/A'
+        }));
+
+        const firstBatchPrompt = `Analyze these ${batches[0].length} exam questions and identify 5-10 coherent topics that group related questions.
+
+Questions:
+${simplifiedFirstBatch.map((q, idx) => `${idx + 1}. ID: ${q.id}
+Q: ${q.text}
+Answer: ${q.correct}`).join('\n\n')}
+
+Return JSON with topics grouping these questions:
+{
+  "topics": [
+    {
+      "name": "Clear Topic Name",
+      "question_ids": ["question_id_1", "question_id_2"],
+      "concepts": ["concept1", "concept2"]
+    }
+  ]
+}`;
 
         const firstBatchResponse = await callAI(
           {
@@ -189,15 +222,23 @@ export async function POST(request: NextRequest) {
           },
           {
             prompt: firstBatchPrompt,
-            systemPrompt: 'You are a senior exam content analyst. Respond with valid JSON only.',
-            timeoutMs: 60000, // 60 seconds per batch
-            maxTokens: 4000,
+            systemPrompt: 'You are a senior exam content analyst. Group questions into coherent topics based on their concepts, NOT their specific content. Respond with valid JSON only.',
+            timeoutMs: 90000, // 90 seconds for first batch
+            maxTokens: 2500, // Reduced token limit for faster response
             responseFormat: 'json'
           }
         );
 
         const firstBatchTopics = parseJSONResponse(firstBatchResponse) as TopicDetectionResponse;
         const allTopics = [...firstBatchTopics.topics];
+
+        // Track questions from first batch
+        for (const topic of firstBatchTopics.topics) {
+          const result = tracker.assignQuestions(topic.name, topic.question_ids);
+          if (result.duplicates > 0 || result.invalid > 0) {
+            logError(`⚠️ Issue in first batch topic "${topic.name}"`, result);
+          }
+        }
 
         // Process remaining batches and merge into existing topics
         for (let i = 1; i < batches.length; i++) {
@@ -206,26 +247,20 @@ export async function POST(request: NextRequest) {
           // Build a more concise prompt for subsequent batches
           const topicNames = allTopics.map(t => t.name).join(', ');
 
-          // Create a simplified question format to reduce prompt size
+          // Create a very simplified question format to reduce prompt size
           const simplifiedQuestions = batches[i].map(q => ({
             id: q.id,
-            text: q.question_text.substring(0, 150) + (q.question_text.length > 150 ? '...' : ''),
-            correct: q.correct_answer
+            text: q.question_text.substring(0, 100) + '...',
+            answer: q.correct_answer ? q.correct_answer.substring(0, 1) : 'N/A'
           }));
 
-          const batchPrompt = `Existing topics: ${topicNames}
+          const batchPrompt = `Topics: ${topicNames}
 
-Analyze these ${batches[i].length} questions and group them into topics. Use existing topic names when appropriate, create new ones if needed.
+Group ${batches[i].length} questions:
+${simplifiedQuestions.map((q, idx) => `${idx + 1}. ${q.id}: ${q.text} (${q.answer})`).join('\n')}
 
-Questions (simplified):
-${simplifiedQuestions.map(q => `ID: ${q.id}\nQ: ${q.text}\nAnswer: ${q.correct}`).join('\n---\n')}
-
-Return JSON with topic assignments:
-{
-  "topics": [
-    {"name": "Topic Name", "question_ids": ["id1","id2"], "concepts": ["concept1","concept2"]}
-  ]
-}`;
+JSON response:
+{"topics":[{"name":"Topic","question_ids":["id1","id2"],"concepts":["c1","c2"]}]}`;
 
           const batchResponse = await callAI(
             {
@@ -235,9 +270,9 @@ Return JSON with topic assignments:
             },
             {
               prompt: batchPrompt,
-              systemPrompt: 'You are a senior exam content analyst. Group questions into coherent topics. Respond with valid JSON only.',
-              timeoutMs: 90000, // Increase to 90 seconds for subsequent batches
-              maxTokens: 3000,
+              systemPrompt: 'Group questions into topics based on their concepts. Use existing topic names or create new. JSON only.',
+              timeoutMs: 90000, // 90 seconds for subsequent batches
+              maxTokens: 2000, // Further reduced for speed
               responseFormat: 'json'
             }
           );
@@ -257,17 +292,41 @@ Return JSON with topic assignments:
               // Add new topic
               allTopics.push(newTopic);
             }
+
+            // Track question assignments for this batch
+            const result = tracker.assignQuestions(newTopic.name, newTopic.question_ids);
+            if (result.duplicates > 0 || result.invalid > 0) {
+              logError(`⚠️ Issue in batch ${i + 1} topic "${newTopic.name}"`, result);
+            }
+          }
+
+          // Validate after each batch
+          const batchValidation = tracker.getStatistics();
+          logStep(`📊 Batch ${i + 1} complete:`, batchValidation);
+        }
+
+        // Create recovery topic for any unassigned questions
+        const unassignedCount = tracker.getUnassignedQuestions().length;
+        if (unassignedCount > 0) {
+          logStep(`⚠️ Found ${unassignedCount} unassigned questions, creating recovery topic`);
+          const recoveryTopic = tracker.createRecoveryTopic("Additional Review Topics");
+          if (recoveryTopic) {
+            allTopics.push(recoveryTopic);
+            logStep(`✅ Recovery topic created with ${recoveryTopic.question_ids.length} questions`);
           }
         }
 
-        validatedTopics = { topics: allTopics };
-
-        // Validate all questions are covered
-        const assignedIds = new Set(allTopics.flatMap(t => t.question_ids));
-        const missingIds = questions.filter(q => !assignedIds.has(q.id));
-        if (missingIds.length > 0) {
-          logError(`⚠️ ${missingIds.length} questions not assigned to topics`, { missingCount: missingIds.length });
+        // Final validation
+        const finalValidation = tracker.validate();
+        if (!finalValidation.isValid) {
+          logError('❌ Question assignment validation failed:', finalValidation.errors);
         }
+
+        // Log final statistics
+        logStep('📊 Final question assignment statistics:', tracker.getStatistics());
+        logStep('📋 Assignment Report:\n' + tracker.getReport());
+
+        validatedTopics = { topics: allTopics };
 
       } else {
         // Small exam, process normally
@@ -284,7 +343,7 @@ Return JSON with topic assignments:
           },
           {
             prompt: topicDetectionPrompt,
-            systemPrompt: 'You are a senior exam content analyst. Respond with valid JSON only.',
+            systemPrompt: 'You are a senior exam content analyst. Group questions into coherent topics based on their concepts. Respond with valid JSON only.',
             timeoutMs: TOPIC_DETECTION_TIMEOUT,
             maxTokens: 8000,
             responseFormat: 'json'
@@ -294,6 +353,35 @@ Return JSON with topic assignments:
         const topicResponse = parseJSONResponse(topicResponseText);
         const expectedQuestionIds = questions.map(q => q.id);
         validatedTopics = validateTopicDetectionResponse(topicResponse, expectedQuestionIds);
+
+        // Track all questions in small exam
+        for (const topic of validatedTopics.topics) {
+          const result = tracker.assignQuestions(topic.name, topic.question_ids);
+          if (result.duplicates > 0 || result.invalid > 0) {
+            logError(`⚠️ Issue in topic "${topic.name}"`, result);
+          }
+        }
+
+        // Check for unassigned questions and create recovery topic if needed
+        const unassignedCount = tracker.getUnassignedQuestions().length;
+        if (unassignedCount > 0) {
+          logStep(`⚠️ Found ${unassignedCount} unassigned questions, creating recovery topic`);
+          const recoveryTopic = tracker.createRecoveryTopic("Additional Review Topics");
+          if (recoveryTopic) {
+            validatedTopics.topics.push(recoveryTopic);
+            logStep(`✅ Recovery topic created with ${recoveryTopic.question_ids.length} questions`);
+          }
+        }
+
+        // Final validation
+        const finalValidation = tracker.validate();
+        if (!finalValidation.isValid) {
+          logError('❌ Question assignment validation failed:', finalValidation.errors);
+        }
+
+        // Log final statistics
+        logStep('📊 Final question assignment statistics:', tracker.getStatistics());
+        logStep('📋 Assignment Report:\n' + tracker.getReport());
       }
 
       const topicDuration = ((Date.now() - topicStartTime) / 1000).toFixed(2);
@@ -354,7 +442,10 @@ Return JSON with topic assignments:
                 },
                 {
                   prompt: lessonPrompt,
-                  systemPrompt: 'You are a master instructor. Respond with Markdown content only.',
+                  systemPrompt: `You are a master instructor creating original educational content.
+CRITICAL: You must NEVER include, quote, or paraphrase any exam questions or content.
+Create only original explanations and examples based on general knowledge of the topic.
+Respond with Markdown content only. No explanations or metadata.`,
                   timeoutMs: LESSON_GENERATION_TIMEOUT,
                   maxTokens: 2000,
                   responseFormat: 'text'
