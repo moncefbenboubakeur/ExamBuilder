@@ -610,6 +610,78 @@ export default function AdminPage() {
         />
       )}
 
+      {/* Delete Exam Confirmation Modal */}
+      {deleteExamModalOpen && examToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 max-w-md w-full mx-4">
+            <h3 className="text-xl font-bold mb-4 dark:text-white">
+              {deleteExamForAll ? 'Delete Exam for All Users' : 'Delete Exam (Admin Only)'}
+            </h3>
+
+            <div className="mb-6 space-y-3">
+              <p className="text-neutral-700 dark:text-gray-300">
+                Are you sure you want to delete the exam:
+              </p>
+              <p className="font-semibold text-lg dark:text-white">
+                "{examToDelete.name}"
+              </p>
+
+              {deleteExamForAll ? (
+                <div className="p-3 bg-rose-50 dark:bg-rose-900/30 border-2 border-rose-300 dark:border-rose-700 rounded-lg">
+                  <p className="text-rose-800 dark:text-rose-300 text-sm">
+                    <strong>DANGER:</strong> This will permanently delete ALL exams with the same name and question count for ALL users.
+                    This includes all questions, sessions, answers, and course data. This action is IRREVERSIBLE.
+                  </p>
+                </div>
+              ) : (
+                <div className="p-3 bg-yellow-50 dark:bg-yellow-900/30 border-2 border-yellow-300 dark:border-yellow-700 rounded-lg">
+                  <p className="text-yellow-800 dark:text-yellow-300 text-sm">
+                    <strong>Warning:</strong> This will permanently delete this specific exam, including all questions,
+                    sessions, answers, and course data. This action cannot be undone.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setDeleteExamModalOpen(false);
+                  setExamToDelete(null);
+                  setDeleteExamForAll(false);
+                }}
+                className="px-6 py-2 border-2 border-neutral-300 dark:border-gray-600 text-neutral-700 dark:text-gray-300 rounded-lg hover:bg-neutral-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteExam}
+                disabled={!!deletingExam}
+                className={cn(
+                  "px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2",
+                  deleteExamForAll
+                    ? "bg-rose-700 text-white hover:bg-rose-800"
+                    : "bg-yellow-600 text-white hover:bg-yellow-700",
+                  deletingExam && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                {deletingExam ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="w-4 h-4" />
+                    Delete Exam
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Delete Course Confirmation Modal */}
       {deleteModalOpen && examToDeleteCourse && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
