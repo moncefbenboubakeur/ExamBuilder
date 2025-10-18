@@ -11,8 +11,7 @@ interface TestModelModalProps {
 
 interface TestResult {
   success: boolean;
-  test_prompt?: string;
-  response?: string;
+  questions?: Array<{ question: string; response: string }>;
   error?: string;
   duration_ms?: number;
   model_id?: string;
@@ -43,10 +42,10 @@ export default function TestModelModal({ model, onClose }: TestModelModalProps) 
 
       const data = await response.json();
       setResult(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       setResult({
         success: false,
-        error: error.message || 'Failed to test model',
+        error: error instanceof Error ? error.message : 'Failed to test model',
       });
     } finally {
       setTesting(false);
@@ -141,33 +140,27 @@ export default function TestModelModal({ model, onClose }: TestModelModalProps) 
                 </div>
               </div>
 
-              {/* Test Prompt */}
-              {result.test_prompt && (
-                <div>
+              {/* Questions and Responses */}
+              {result.success && result.questions && result.questions.map((qa, index) => (
+                <div key={index}>
                   <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-2">
-                    Test Prompt:
+                    Question {index + 1}:
                   </h3>
-                  <div className="bg-neutral-50 dark:bg-gray-700 rounded-lg p-3">
+                  <div className="bg-neutral-50 dark:bg-gray-700 rounded-lg p-3 mb-2">
                     <p className="text-sm text-neutral-700 dark:text-gray-300 font-mono">
-                      {result.test_prompt}
+                      {qa.question}
                     </p>
                   </div>
-                </div>
-              )}
-
-              {/* Response */}
-              {result.success && result.response && (
-                <div>
                   <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-2">
-                    Model Response:
+                    Response {index + 1}:
                   </h3>
-                  <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 border border-green-200 dark:border-green-800">
+                  <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 border border-green-200 dark:border-green-800 mb-4">
                     <p className="text-sm text-green-900 dark:text-green-100">
-                      {result.response}
+                      {qa.response}
                     </p>
                   </div>
                 </div>
-              )}
+              ))}
 
               {/* Error */}
               {!result.success && result.error && (

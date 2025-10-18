@@ -38,21 +38,51 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
-    const testPrompt = 'Say "Hello! I am working correctly." in a single sentence.';
     const startTime = Date.now();
 
     try {
-      const response = await callAI(
+      // GPT-5 models are reasoning models and need more tokens (reasoning + output)
+      let maxTokens = 100;
+      if (model_id === 'gpt-5-nano') {
+        maxTokens = 1000; // Nano model has very high reasoning overhead
+      } else if (model_id === 'gpt-5-mini') {
+        maxTokens = 1500; // Mini model needs more tokens for dual questions
+      } else if (model_id === 'gpt-5') {
+        maxTokens = 2000; // Full GPT-5 needs the most tokens
+      } else if (model_id.startsWith('gpt-5')) {
+        maxTokens = 500; // Other GPT-5 models
+      }
+
+      // Question 1: Basic working test
+      const question1 = 'Say "Hello! I am working correctly." in a single sentence.';
+      const response1 = await callAI(
         {
           provider,
           model_id,
           model_name
         },
         {
-          prompt: testPrompt,
+          prompt: question1,
           systemPrompt: 'You are a helpful AI assistant. Respond concisely.',
-          timeoutMs: 10000, // 10 second timeout for test
-          maxTokens: 50,
+          timeoutMs: 15000, // Increased timeout for reasoning models
+          maxTokens,
+          responseFormat: 'text'
+        }
+      );
+
+      // Question 2: Model identification
+      const question2 = 'Identify yourself.';
+      const response2 = await callAI(
+        {
+          provider,
+          model_id,
+          model_name
+        },
+        {
+          prompt: question2,
+          systemPrompt: 'You are a helpful AI assistant. State your exact model name.',
+          timeoutMs: 15000,
+          maxTokens,
           responseFormat: 'text'
         }
       );
@@ -64,12 +94,14 @@ export async function POST(request: NextRequest) {
         model_id,
         model_name,
         provider,
-        test_prompt: testPrompt,
-        response: response.trim(),
+        questions: [
+          { question: question1, response: response1.trim() },
+          { question: question2, response: response2.trim() }
+        ],
         duration_ms: duration
       });
 
-    } catch (aiError: any) {
+    } catch (aiError: unknown) {
       const duration = Date.now() - startTime;
 
       return NextResponse.json({
@@ -77,16 +109,15 @@ export async function POST(request: NextRequest) {
         model_id,
         model_name,
         provider,
-        test_prompt: testPrompt,
-        error: aiError.message || String(aiError),
+        error: aiError instanceof Error ? aiError.message : String(aiError),
         duration_ms: duration
       }, { status: 500 });
     }
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({
       success: false,
-      error: error.message || 'An unexpected error occurred'
+      error: error instanceof Error ? error.message : 'An unexpected error occurred'
     }, { status: 500 });
   }
 }

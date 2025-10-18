@@ -6,7 +6,7 @@ import { UserPreferences } from '@/lib/supabaseClient';
  * GET /api/preferences
  * Fetch user's shuffle preferences (or return defaults if not set)
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const supabase = await createClient();
 

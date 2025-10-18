@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { AI_MODELS, AIModel } from '@/lib/ai-models';
-import { Shield, Bot, Check, DollarSign, Zap, AlertCircle, RefreshCw, Sparkles, FlaskConical } from 'lucide-react';
+import { Shield, Bot, Check, DollarSign, Zap, AlertCircle, RefreshCw, Sparkles, FlaskConical, Beaker } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import TestModelModal from '@/components/TestModelModal';
+import TestAllModelsModal from '@/components/TestAllModelsModal';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,6 +38,7 @@ export default function AdminPage() {
   const [exams, setExams] = useState<Array<{ id: string; name: string; question_count: number }>>([]);
   const [reanalyzing, setReanalyzing] = useState<string | null>(null);
   const [testingModel, setTestingModel] = useState<AIModel | null>(null);
+  const [showTestAllModal, setShowTestAllModal] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -256,7 +258,16 @@ export default function AdminPage() {
 
         {/* Model Selection */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border-2 border-neutral-200 dark:border-gray-700">
-          <h2 className="text-2xl font-bold mb-6 dark:text-white">Select AI Model</h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold dark:text-white">Select AI Model</h2>
+            <button
+              onClick={() => setShowTestAllModal(true)}
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium flex items-center gap-2"
+            >
+              <Beaker className="w-4 h-4" />
+              Test All Models
+            </button>
+          </div>
 
           {/* OpenAI Models */}
           <div className="mb-8">
@@ -392,6 +403,14 @@ export default function AdminPage() {
         <TestModelModal
           model={testingModel}
           onClose={() => setTestingModel(null)}
+        />
+      )}
+
+      {/* Test All Models Modal */}
+      {showTestAllModal && (
+        <TestAllModelsModal
+          models={AI_MODELS}
+          onClose={() => setShowTestAllModal(false)}
         />
       )}
     </div>

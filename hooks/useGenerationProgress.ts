@@ -277,7 +277,7 @@ export function useGenerationProgress({
     if (autoStart) {
       startGeneration();
     }
-  }, [autoStart]);
+  }, [autoStart, startGeneration]);
 
   /**
    * Cleanup on unmount

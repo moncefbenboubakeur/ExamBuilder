@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState, use } from 'react';
+import { useEffect, useState, use, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Loader2, BookOpen, Menu } from 'lucide-react';
 import StudySidebar from '@/components/study/StudySidebar';
 import StudyContent from '@/components/study/StudyContent';
 import StudyNav from '@/components/study/StudyNav';
+import CourseGenerationProgress from '@/components/CourseGenerationProgress';
 import { CourseData } from '@/lib/course/load';
 
 export default function StudyPage({ params }: { params: Promise<{ exam_id: string }> }) {
@@ -16,7 +17,10 @@ export default function StudyPage({ params }: { params: Promise<{ exam_id: strin
   const [error, setError] = useState<string | null>(null);
   const [currentTopicIndex, setCurrentTopicIndex] = useState(0);
   const [generating, setGenerating] = useState(false);
+  const [generationStep, setGenerationStep] = useState(0);
+  const [generationMessage, setGenerationMessage] = useState('Starting course generation...');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!examId) return;
@@ -71,8 +75,37 @@ export default function StudyPage({ params }: { params: Promise<{ exam_id: strin
 
     setGenerating(true);
     setError(null);
+    setGenerationStep(0);
+    setGenerationMessage('Initializing course generation...');
+
+    // Simulate progress updates
+    const progressSteps = [
+      { step: 1, message: 'Analyzing exam questions...', delay: 2000 },
+      { step: 2, message: 'Processing questions in batches...', delay: 3000 },
+      { step: 3, message: 'Detecting topics and concepts...', delay: 4000 },
+      { step: 4, message: 'Identifying key learning areas...', delay: 3000 },
+      { step: 5, message: 'Generating lesson content...', delay: 5000 },
+      { step: 6, message: 'Creating study materials...', delay: 4000 },
+      { step: 7, message: 'Finalizing course structure...', delay: 2000 }
+    ];
+
+    // Start progress simulation
+    let currentStepIndex = 0;
+    const updateProgress = () => {
+      if (currentStepIndex < progressSteps.length) {
+        const { step, message } = progressSteps[currentStepIndex];
+        setGenerationStep(step);
+        setGenerationMessage(message);
+        currentStepIndex++;
+      }
+    };
+
+    // Update progress every few seconds
+    pollIntervalRef.current = setInterval(updateProgress, 8000);
+    updateProgress(); // Start immediately
 
     try {
+      // Start generation
       const response = await fetch('/api/generate-course', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -84,17 +117,47 @@ export default function StudyPage({ params }: { params: Promise<{ exam_id: strin
         throw new Error(data.error || 'Failed to generate course');
       }
 
-      // Reload the course data
-      const courseResponse = await fetch(`/api/courses/${examId}`);
-      const courseData: CourseData = await courseResponse.json();
-      setCourseData(courseData);
-      setError(null);
+      // Generation started successfully, wait for it to complete
+      await response.json();
+
+      // Clear the interval
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+      }
+
+      // Set to completed
+      setGenerationStep(8);
+      setGenerationMessage('Course generation completed!');
+
+      // Wait a moment to show completion
+      setTimeout(async () => {
+        // Reload the course data
+        const courseResponse = await fetch(`/api/courses/${examId}`);
+        if (courseResponse.ok) {
+          const courseData: CourseData = await courseResponse.json();
+          setCourseData(courseData);
+          setError(null);
+        }
+        setGenerating(false);
+      }, 2000);
+
     } catch (err) {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+      }
       setError(err instanceof Error ? err.message : 'Failed to generate course');
-    } finally {
       setGenerating(false);
     }
   };
+
+  // Clean up interval on unmount
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+      }
+    };
+  }, []);
 
   const handleTopicSelect = (index: number) => {
     setCurrentTopicIndex(index);
@@ -155,20 +218,22 @@ export default function StudyPage({ params }: { params: Promise<{ exam_id: strin
           <p className="text-gray-600 dark:text-gray-400 mb-6">
             This exam doesn&apos;t have a study course yet. Generate one to get started!
           </p>
-          <button
-            onClick={() => handleGenerateCourse()}
-            disabled={generating}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-2"
-          >
-            {generating ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Generating Course...</span>
-              </>
-            ) : (
+          {!generating && (
+            <button
+              onClick={() => handleGenerateCourse()}
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center gap-2"
+            >
               <span>Generate Study Course</span>
-            )}
-          </button>
+            </button>
+          )}
+
+          {generating && (
+            <CourseGenerationProgress
+              currentStep={generationStep}
+              totalSteps={8}
+              stepLabel={generationMessage}
+            />
+          )}
           <button
             onClick={() => router.back()}
             className="mt-4 block mx-auto text-blue-600 hover:text-blue-700"

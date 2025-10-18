@@ -4,7 +4,9 @@ import { callAI, parseJSONResponse } from '@/lib/ai/callAi';
 import {
   buildTopicDetectionPrompt,
   validateTopicDetectionResponse,
-  QuestionForTopicDetection
+  QuestionForTopicDetection,
+  DetectedTopic,
+  TopicDetectionResponse
 } from '@/lib/ai/prompts/topicDetection';
 import {
   buildLessonGenerationPrompt,
@@ -15,16 +17,16 @@ import { upsertTopics, upsertCourseSections, checkCourseExists } from '@/lib/cou
 import { detectExamLeakage } from '@/lib/course/leakageDetection';
 
 const REGEN_WINDOW_MINUTES = process.env.NODE_ENV === 'production' ? 1 : 0;
-const TOPIC_DETECTION_TIMEOUT = 20000; // 20 seconds
+const TOPIC_DETECTION_TIMEOUT = 120000; // 120 seconds (2 minutes) for large exams
 const LESSON_GENERATION_TIMEOUT = 30000; // 30 seconds per lesson
 
 // Enhanced logging utility
-function logStep(step: string, data?: any) {
+function logStep(step: string, data?: unknown) {
   const timestamp = new Date().toISOString();
   console.log(`[${timestamp}] 📚 ${step}`, data ? JSON.stringify(data, null, 2) : '');
 }
 
-function logError(step: string, error: any) {
+function logError(step: string, error: unknown) {
   const timestamp = new Date().toISOString();
   console.error(`[${timestamp}] ❌ ${step}`, {
     message: error instanceof Error ? error.message : String(error),
@@ -160,28 +162,139 @@ export async function POST(request: NextRequest) {
     const topicStartTime = Date.now();
 
     try {
-      const topicDetectionPrompt = buildTopicDetectionPrompt(
-        questions as QuestionForTopicDetection[]
-      );
+      let validatedTopics: { topics: DetectedTopic[] };
 
-      logStep('🤖 Calling AI for topic detection');
-      const topicResponseText = await callAI(
-        {
-          provider: settings.provider,
-          model_id: settings.model_id,
-          model_name: settings.model_name
-        },
-        {
-          prompt: topicDetectionPrompt,
-          systemPrompt: 'You are a senior exam content analyst. Respond with valid JSON only.',
-          timeoutMs: TOPIC_DETECTION_TIMEOUT,
-          responseFormat: 'json'
+      // For large exams (>100 questions), process in batches
+      if (questions.length > 100) {
+        logStep(`📦 Large exam detected (${questions.length} questions), processing in batches`);
+
+        const BATCH_SIZE = 75; // Increased batch size to reduce API calls
+        const batches: QuestionForTopicDetection[][] = [];
+
+        for (let i = 0; i < questions.length; i += BATCH_SIZE) {
+          batches.push(questions.slice(i, i + BATCH_SIZE) as QuestionForTopicDetection[]);
         }
-      );
 
-      const topicResponse = parseJSONResponse(topicResponseText);
-      const expectedQuestionIds = questions.map(q => q.id);
-      const validatedTopics = validateTopicDetectionResponse(topicResponse, expectedQuestionIds);
+        logStep(`📊 Created ${batches.length} batches of ~${BATCH_SIZE} questions each`);
+
+        // Process first batch to get initial topics
+        logStep(`🔍 Processing batch 1/${batches.length} (${batches[0].length} questions)`);
+        const firstBatchPrompt = buildTopicDetectionPrompt(batches[0]);
+
+        const firstBatchResponse = await callAI(
+          {
+            provider: settings.provider,
+            model_id: settings.model_id,
+            model_name: settings.model_name
+          },
+          {
+            prompt: firstBatchPrompt,
+            systemPrompt: 'You are a senior exam content analyst. Respond with valid JSON only.',
+            timeoutMs: 60000, // 60 seconds per batch
+            maxTokens: 4000,
+            responseFormat: 'json'
+          }
+        );
+
+        const firstBatchTopics = parseJSONResponse(firstBatchResponse) as TopicDetectionResponse;
+        const allTopics = [...firstBatchTopics.topics];
+
+        // Process remaining batches and merge into existing topics
+        for (let i = 1; i < batches.length; i++) {
+          logStep(`🔍 Processing batch ${i + 1}/${batches.length} (${batches[i].length} questions)`);
+
+          // Build a more concise prompt for subsequent batches
+          const topicNames = allTopics.map(t => t.name).join(', ');
+
+          // Create a simplified question format to reduce prompt size
+          const simplifiedQuestions = batches[i].map(q => ({
+            id: q.id,
+            text: q.question_text.substring(0, 150) + (q.question_text.length > 150 ? '...' : ''),
+            correct: q.correct_answer
+          }));
+
+          const batchPrompt = `Existing topics: ${topicNames}
+
+Analyze these ${batches[i].length} questions and group them into topics. Use existing topic names when appropriate, create new ones if needed.
+
+Questions (simplified):
+${simplifiedQuestions.map(q => `ID: ${q.id}\nQ: ${q.text}\nAnswer: ${q.correct}`).join('\n---\n')}
+
+Return JSON with topic assignments:
+{
+  "topics": [
+    {"name": "Topic Name", "question_ids": ["id1","id2"], "concepts": ["concept1","concept2"]}
+  ]
+}`;
+
+          const batchResponse = await callAI(
+            {
+              provider: settings.provider,
+              model_id: settings.model_id,
+              model_name: settings.model_name
+            },
+            {
+              prompt: batchPrompt,
+              systemPrompt: 'You are a senior exam content analyst. Group questions into coherent topics. Respond with valid JSON only.',
+              timeoutMs: 90000, // Increase to 90 seconds for subsequent batches
+              maxTokens: 3000,
+              responseFormat: 'json'
+            }
+          );
+
+          const batchTopics = parseJSONResponse(batchResponse) as TopicDetectionResponse;
+
+          // Merge batch topics into allTopics
+          for (const newTopic of batchTopics.topics) {
+            const existingTopic = allTopics.find(t => t.name === newTopic.name);
+            if (existingTopic) {
+              // Add questions to existing topic
+              existingTopic.question_ids.push(...newTopic.question_ids);
+              // Merge unique concepts
+              const uniqueConcepts = new Set([...existingTopic.concepts, ...newTopic.concepts]);
+              existingTopic.concepts = Array.from(uniqueConcepts).slice(0, 5);
+            } else {
+              // Add new topic
+              allTopics.push(newTopic);
+            }
+          }
+        }
+
+        validatedTopics = { topics: allTopics };
+
+        // Validate all questions are covered
+        const assignedIds = new Set(allTopics.flatMap(t => t.question_ids));
+        const missingIds = questions.filter(q => !assignedIds.has(q.id));
+        if (missingIds.length > 0) {
+          logError(`⚠️ ${missingIds.length} questions not assigned to topics`, { missingCount: missingIds.length });
+        }
+
+      } else {
+        // Small exam, process normally
+        const topicDetectionPrompt = buildTopicDetectionPrompt(
+          questions as QuestionForTopicDetection[]
+        );
+
+        logStep('🤖 Calling AI for topic detection');
+        const topicResponseText = await callAI(
+          {
+            provider: settings.provider,
+            model_id: settings.model_id,
+            model_name: settings.model_name
+          },
+          {
+            prompt: topicDetectionPrompt,
+            systemPrompt: 'You are a senior exam content analyst. Respond with valid JSON only.',
+            timeoutMs: TOPIC_DETECTION_TIMEOUT,
+            maxTokens: 8000,
+            responseFormat: 'json'
+          }
+        );
+
+        const topicResponse = parseJSONResponse(topicResponseText);
+        const expectedQuestionIds = questions.map(q => q.id);
+        validatedTopics = validateTopicDetectionResponse(topicResponse, expectedQuestionIds);
+      }
 
       const topicDuration = ((Date.now() - topicStartTime) / 1000).toFixed(2);
       logStep(`✅ Detected ${validatedTopics.topics.length} topics in ${topicDuration}s`, {
@@ -193,82 +306,108 @@ export async function POST(request: NextRequest) {
       await upsertTopics(supabase, exam_id, validatedTopics.topics);
       logStep('✅ Topics saved successfully');
 
-      // STEP 2: Generate lessons for each topic IN PARALLEL (70% speed improvement!)
-      logStep(`🚀 Starting PARALLEL lesson generation for ${validatedTopics.topics.length} topics`);
+      // STEP 2: Generate lessons with controlled concurrency to avoid rate limits
+      logStep(`🚀 Starting lesson generation for ${validatedTopics.topics.length} topics`);
       const lessonStartTime = Date.now();
 
-      // Generate all lessons concurrently instead of sequentially
-      const courseSections = await Promise.all(
-        validatedTopics.topics.map(async (topic, i) => {
-          const lessonTopicStartTime = Date.now();
-          try {
-            logStep(`📝 [${i + 1}/${validatedTopics.topics.length}] Generating lesson: ${topic.name}`);
+      // Process lessons in batches to avoid rate limiting
+      const CONCURRENT_LESSONS = 3; // Process 3 lessons at a time to stay within rate limits
+      const courseSections: Array<{
+        exam_id: string;
+        topic_name: string;
+        content_md: string;
+        order_index: number;
+      }> = [];
 
-            // Get questions for this topic
-            const topicQuestions = questions.filter(q =>
-              topic.question_ids.includes(q.id)
-            ) as QuestionForLesson[];
+      for (let batchStart = 0; batchStart < validatedTopics.topics.length; batchStart += CONCURRENT_LESSONS) {
+        const batchEnd = Math.min(batchStart + CONCURRENT_LESSONS, validatedTopics.topics.length);
+        const batchTopics = validatedTopics.topics.slice(batchStart, batchEnd);
+        const batchNumber = Math.floor(batchStart / CONCURRENT_LESSONS) + 1;
+        const totalBatches = Math.ceil(validatedTopics.topics.length / CONCURRENT_LESSONS);
 
-            const lessonPrompt = buildLessonGenerationPrompt({
-              topicName: topic.name,
-              concepts: topic.concepts,
-              questions: topicQuestions
-            });
+        logStep(`📚 Processing lesson batch ${batchNumber}/${totalBatches} (topics ${batchStart + 1}-${batchEnd})`);
 
-            logStep(`🤖 [${i + 1}/${validatedTopics.topics.length}] Calling AI for lesson: ${topic.name}`);
-            const lessonMarkdown = await callAI(
-              {
-                provider: settings.provider,
-                model_id: settings.model_id,
-                model_name: settings.model_name
-              },
-              {
-                prompt: lessonPrompt,
-                systemPrompt: 'You are a master instructor. Respond with Markdown content only.',
-                timeoutMs: LESSON_GENERATION_TIMEOUT,
-                maxTokens: 2000,
-                responseFormat: 'text'
-              }
-            );
+        const batchResults = await Promise.all(
+          batchTopics.map(async (topic, batchIndex) => {
+            const i = batchStart + batchIndex;
+            const lessonTopicStartTime = Date.now();
+            try {
+              logStep(`📝 [${i + 1}/${validatedTopics.topics.length}] Generating lesson: ${topic.name}`);
 
-            // Validate lesson structure
-            validateLessonMarkdown(lessonMarkdown, topic.name);
+              // Get questions for this topic
+              const topicQuestions = questions.filter(q =>
+                topic.question_ids.includes(q.id)
+              ) as QuestionForLesson[];
 
-            // Check for exam text leakage
-            const leakageCheck = detectExamLeakage(
-              lessonMarkdown,
-              topicQuestions.map(q => ({
-                question_text: q.question_text,
-                options: q.options
-              }))
-            );
-
-            if (leakageCheck.hasLeakage) {
-              logError(`⚠️  Leakage detected in topic: ${topic.name}`, {
-                topic: topic.name,
-                details: leakageCheck.details
+              const lessonPrompt = buildLessonGenerationPrompt({
+                topicName: topic.name,
+                concepts: topic.concepts,
+                questions: topicQuestions
               });
+
+              logStep(`🤖 [${i + 1}/${validatedTopics.topics.length}] Calling AI for lesson: ${topic.name}`);
+              const lessonMarkdown = await callAI(
+                {
+                  provider: settings.provider,
+                  model_id: settings.model_id,
+                  model_name: settings.model_name
+                },
+                {
+                  prompt: lessonPrompt,
+                  systemPrompt: 'You are a master instructor. Respond with Markdown content only.',
+                  timeoutMs: LESSON_GENERATION_TIMEOUT,
+                  maxTokens: 2000,
+                  responseFormat: 'text'
+                }
+              );
+
+              // Validate lesson structure
+              validateLessonMarkdown(lessonMarkdown, topic.name);
+
+              // Check for exam text leakage
+              const leakageCheck = detectExamLeakage(
+                lessonMarkdown,
+                topicQuestions.map(q => ({
+                  question_text: q.question_text,
+                  options: q.options
+                }))
+              );
+
+              if (leakageCheck.hasLeakage) {
+                logError(`⚠️  Leakage detected in topic: ${topic.name}`, {
+                  topic: topic.name,
+                  details: leakageCheck.details
+                });
+              }
+
+              const lessonDuration = ((Date.now() - lessonTopicStartTime) / 1000).toFixed(2);
+              logStep(`✅ [${i + 1}/${validatedTopics.topics.length}] Completed lesson: ${topic.name} in ${lessonDuration}s`);
+
+              return {
+                exam_id: exam_id!,
+                topic_name: topic.name,
+                content_md: lessonMarkdown,
+                order_index: i
+              };
+            } catch (error) {
+              logError(`Failed to generate lesson for topic: ${topic.name}`, {
+                topic: topic.name,
+                index: i,
+                error
+              });
+              throw error; // Re-throw to fail the entire generation
             }
+          })
+        );
 
-            const lessonDuration = ((Date.now() - lessonTopicStartTime) / 1000).toFixed(2);
-            logStep(`✅ [${i + 1}/${validatedTopics.topics.length}] Completed lesson: ${topic.name} in ${lessonDuration}s`);
+        courseSections.push(...batchResults);
 
-            return {
-              exam_id: exam_id!,
-              topic_name: topic.name,
-              content_md: lessonMarkdown,
-              order_index: i
-            };
-          } catch (error) {
-            logError(`Failed to generate lesson for topic: ${topic.name}`, {
-              topic: topic.name,
-              index: i,
-              error
-            });
-            throw error; // Re-throw to fail the entire generation
-          }
-        })
-      );
+        // Add a small delay between batches to be extra safe with rate limits
+        if (batchEnd < validatedTopics.topics.length) {
+          logStep(`⏳ Waiting 2 seconds before next batch to respect rate limits...`);
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      }
 
       const lessonDuration = ((Date.now() - lessonStartTime) / 1000).toFixed(2);
       logStep(`✅ All ${courseSections.length} lessons generated in ${lessonDuration}s (parallel processing)`);
@@ -298,6 +437,7 @@ export async function POST(request: NextRequest) {
 
     } catch (topicError) {
       logError('Topic detection failed', topicError);
+
       return NextResponse.json({
         error: 'Topic detection failed',
         details: topicError instanceof Error ? topicError.message : String(topicError),

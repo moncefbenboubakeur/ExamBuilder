@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
-import { UserPreferences } from '@/lib/supabaseClient';
 import { Shuffle, Save, ArrowLeft, Loader2 } from 'lucide-react';
 
 export default function PreferencesPage() {
@@ -11,7 +10,6 @@ export default function PreferencesPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
-  const [preferences, setPreferences] = useState<UserPreferences | null>(null);
   const [shuffleQuestions, setShuffleQuestions] = useState(true);
   const [shuffleOptions, setShuffleOptions] = useState(true);
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -37,7 +35,6 @@ export default function PreferencesPage() {
       const data = await response.json();
 
       if (data.success && data.preferences) {
-        setPreferences(data.preferences);
         setShuffleQuestions(data.preferences.shuffle_questions);
         setShuffleOptions(data.preferences.shuffle_options);
       }
@@ -65,7 +62,6 @@ export default function PreferencesPage() {
       const data = await response.json();
 
       if (data.success) {
-        setPreferences(data.preferences);
         setSaveMessage({ type: 'success', text: 'Preferences saved successfully!' });
         setTimeout(() => setSaveMessage(null), 3000);
       } else {
