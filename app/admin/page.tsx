@@ -43,6 +43,10 @@ export default function AdminPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteForAll, setDeleteForAll] = useState(false);
   const [examToDeleteCourse, setExamToDeleteCourse] = useState<{ id: string; name: string } | null>(null);
+  const [deletingExam, setDeletingExam] = useState<string | null>(null);
+  const [deleteExamModalOpen, setDeleteExamModalOpen] = useState(false);
+  const [deleteExamForAll, setDeleteExamForAll] = useState(false);
+  const [examToDelete, setExamToDelete] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -178,6 +182,56 @@ export default function AdminPage() {
       });
     } finally {
       setDeletingCourse(null);
+    }
+  }
+
+  async function handleDeleteExam(examId: string, examName: string) {
+    setExamToDelete({ id: examId, name: examName });
+    setDeleteExamModalOpen(true);
+  }
+
+  async function confirmDeleteExam() {
+    if (!examToDelete) return;
+
+    setDeletingExam(examToDelete.id);
+    setMessage(null);
+
+    try {
+      const response = await fetch('/api/admin/delete-exam', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          examId: examToDelete.id,
+          deleteForAll: deleteExamForAll
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setMessage({
+          type: 'success',
+          text: data.message
+        });
+        // Clear the modal
+        setDeleteExamModalOpen(false);
+        setExamToDelete(null);
+        setDeleteExamForAll(false);
+        // Refresh exams list
+        fetchExams();
+      } else {
+        setMessage({
+          type: 'error',
+          text: data.error || 'Failed to delete exam'
+        });
+      }
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: `Failed: ${error instanceof Error ? error.message : String(error)}`
+      });
+    } finally {
+      setDeletingExam(null);
     }
   }
 
@@ -483,6 +537,51 @@ export default function AdminPage() {
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                       ) : (
                         <Users className="w-4 h-4" />
+                      )}
+                    </button>
+
+                    {/* Delete Exam Buttons */}
+                    <div className="w-px h-8 bg-gray-300 dark:bg-gray-600 mx-1" /> {/* Divider */}
+
+                    <button
+                      onClick={() => {
+                        setDeleteExamForAll(false);
+                        handleDeleteExam(exam.id, exam.name);
+                      }}
+                      disabled={deletingExam === exam.id}
+                      className={cn(
+                        "px-4 py-3 rounded-xl font-medium transition-all duration-200 flex items-center gap-2",
+                        deletingExam === exam.id
+                          ? "bg-neutral-300 text-neutral-500 cursor-not-allowed"
+                          : "bg-yellow-600 text-white hover:bg-yellow-700 shadow-md hover:shadow-lg"
+                      )}
+                      title="Delete entire exam (admin only)"
+                    >
+                      {deletingExam === exam.id ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      ) : (
+                        <XCircle className="w-4 h-4" />
+                      )}
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setDeleteExamForAll(true);
+                        handleDeleteExam(exam.id, exam.name);
+                      }}
+                      disabled={deletingExam === exam.id}
+                      className={cn(
+                        "px-4 py-3 rounded-xl font-medium transition-all duration-200 flex items-center gap-2",
+                        deletingExam === exam.id
+                          ? "bg-neutral-300 text-neutral-500 cursor-not-allowed"
+                          : "bg-rose-700 text-white hover:bg-rose-800 shadow-md hover:shadow-lg"
+                      )}
+                      title="Delete exam for ALL users with same name"
+                    >
+                      {deletingExam === exam.id ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      ) : (
+                        <UserX className="w-4 h-4" />
                       )}
                     </button>
                   </div>

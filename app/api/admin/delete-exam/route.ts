@@ -92,7 +92,8 @@ export async function POST(request: NextRequest) {
       });
 
     } else {
-      // Delete only the specific exam (admin's exam)
+      // Delete only the specific exam
+      // As admin, we'll delete it regardless of ownership
       const { error: deleteError } = await supabase
         .from('exams')
         .delete()
