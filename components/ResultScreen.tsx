@@ -1,6 +1,6 @@
 'use client';
 
-import { RotateCcw, XCircle, Home } from 'lucide-react';
+import { RotateCcw, XCircle, Home, BookOpen } from 'lucide-react';
 import ExamStats from './ExamStats';
 
 interface ResultScreenProps {
@@ -10,6 +10,7 @@ interface ResultScreenProps {
   score: number;
   onRetryAll: () => void;
   onRetryWrong: () => void;
+  onReview?: () => void;
   hasWrongAnswers: boolean;
 }
 
@@ -20,6 +21,7 @@ export default function ResultScreen({
   score,
   onRetryAll,
   onRetryWrong,
+  onReview,
   hasWrongAnswers,
 }: ResultScreenProps) {
   return (
@@ -32,6 +34,16 @@ export default function ResultScreen({
       />
 
       <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+        {onReview && (
+          <button
+            onClick={onReview}
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-2xl font-medium hover:bg-purple-700 transition-all duration-200 shadow-sm hover:shadow-md"
+          >
+            <BookOpen className="w-5 h-5" />
+            Review Answers & AI Analysis
+          </button>
+        )}
+
         <button
           onClick={onRetryAll}
           className="flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-medium hover:bg-indigo-700 transition-all duration-200 shadow-sm hover:shadow-md"

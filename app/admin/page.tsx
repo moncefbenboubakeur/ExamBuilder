@@ -508,7 +508,7 @@ export default function AdminPage() {
                       ) : (
                         <>
                           <RefreshCw className="w-4 h-4" />
-                          Analyze with AI
+                          Analyze with Multiple Models
                         </>
                       )}
                     </button>

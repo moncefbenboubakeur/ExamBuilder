@@ -12,9 +12,12 @@ import {
   ChevronUp,
   BookOpen,
   X,
-  FileText
+  FileText,
+  Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import ModelConsensusDisplay from '@/components/exam/ModelConsensusDisplay';
+import { getBestModelAnalysis, transformToLegacyFormat } from '@/lib/utils/multi-model-helpers';
 
 interface QuestionCardProps {
   question: Question;
@@ -38,21 +41,48 @@ export default function QuestionCard({
   const [revealed, setRevealed] = useState(showCorrectAnswer);
   const [showFullAIReasoning, setShowFullAIReasoning] = useState(false);
   const [expandedOptions, setExpandedOptions] = useState<Set<string>>(new Set());
+  const [multiModelAnalysis, setMultiModelAnalysis] = useState<any>(null);
+  const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
 
-  // Normalize ai_analysis to single object
-  const aiAnalysis = Array.isArray(question.ai_analysis)
-    ? question.ai_analysis[0]
-    : question.ai_analysis;
+  // Try to use multi-model analysis first, fall back to old single-model if not available
+  const [aiAnalysis, setAiAnalysis] = useState<any>(null);
 
-  // Debug logging
+  // Fetch multi-model analysis when question changes or when revealed
   useEffect(() => {
-    console.log('🔍 Question AI Analysis:', {
-      hasAiAnalysis: !!aiAnalysis,
-      aiAnalysisType: typeof aiAnalysis,
-      aiAnalysisValue: aiAnalysis,
-      rawQuestionData: question.ai_analysis
-    });
-  }, [aiAnalysis, question.ai_analysis]);
+    const fetchMultiModelAnalysis = async () => {
+      if (revealed && question.id) {
+        setIsLoadingAnalysis(true);
+        try {
+          const bestAnalysis = await getBestModelAnalysis(question.id);
+          const transformed = transformToLegacyFormat(bestAnalysis);
+
+          if (transformed) {
+            setMultiModelAnalysis(transformed);
+            setAiAnalysis(transformed); // Use multi-model analysis
+            console.log('🚀 Using multi-model analysis from:', transformed.model_used);
+          } else {
+            // Fall back to old single-model analysis
+            const oldAnalysis = Array.isArray(question.ai_analysis)
+              ? question.ai_analysis[0]
+              : question.ai_analysis;
+            setAiAnalysis(oldAnalysis);
+            console.log('📌 Falling back to old single-model analysis');
+          }
+        } catch (error) {
+          console.error('Error fetching multi-model analysis:', error);
+          // Fall back to old analysis on error
+          const oldAnalysis = Array.isArray(question.ai_analysis)
+            ? question.ai_analysis[0]
+            : question.ai_analysis;
+          setAiAnalysis(oldAnalysis);
+        } finally {
+          setIsLoadingAnalysis(false);
+        }
+      }
+    };
+
+    fetchMultiModelAnalysis();
+  }, [question.id, revealed, question.ai_analysis]);
 
   // Reset revealed state when question changes
   useEffect(() => {
@@ -100,10 +130,13 @@ export default function QuestionCard({
     return 'border-neutral-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-neutral-900 dark:text-gray-100 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20';
   };
 
-  // Check if sources disagree
-  const sourcesDisagree = aiAnalysis &&
-    (question.correct_answer !== aiAnalysis.ai_recommended_answer ||
-      (question.community_vote && question.community_vote !== aiAnalysis.ai_recommended_answer));
+  // Check if sources disagree - only between exam creator and community vote
+  // (AI consensus is shown separately in ModelConsensusDisplay)
+  // Extract just the letter from community vote (might be "A (92%)" format)
+  const communityAnswer = question.community_vote?.split(' ')[0]?.trim();
+  const sourcesDisagree = communityAnswer &&
+    question.correct_answer &&
+    communityAnswer !== question.correct_answer;
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 max-w-3xl mx-auto border-2 border-neutral-100 dark:border-gray-700">
@@ -175,15 +208,15 @@ export default function QuestionCard({
             )}
           </div>
 
-          {/* Warning if answers disagree */}
+          {/* Warning if exam creator and community disagree */}
           {sourcesDisagree && (
             <div className="bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-300 dark:border-yellow-800 rounded-xl p-3 text-sm mb-3">
               <div className="flex items-start gap-2">
                 <span className="text-lg">⚠️</span>
                 <div className="flex-1">
-                  <p className="font-semibold text-yellow-900 dark:text-yellow-300 mb-1">Sources disagree on the answer!</p>
+                  <p className="font-semibold text-yellow-900 dark:text-yellow-300 mb-1">Exam creator and community disagree!</p>
                   <p className="text-yellow-800 dark:text-yellow-400 text-xs">
-                    Review all explanations carefully to understand why. This may indicate a controversial or outdated question.
+                    The exam creator marked {question.correct_answer} but the community voted {question.community_vote}. This may indicate an error or ambiguity in the question.
                   </p>
                 </div>
               </div>
@@ -201,6 +234,19 @@ export default function QuestionCard({
             </button>
           )}
         </div>
+      )}
+
+      {/* Multi-Model Consensus Display - Only show after revealing answer */}
+      {revealed && (
+        <ModelConsensusDisplay
+          questionId={question.id}
+          currentAnswer={multipleChoice ? selectedAnswers.join(',') : selectedAnswer}
+          onModelAnswerSelect={(answer) => {
+            if (!revealed) {
+              onAnswerSelect(answer);
+            }
+          }}
+        />
       )}
 
       {/* Options */}

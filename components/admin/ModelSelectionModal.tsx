@@ -49,7 +49,7 @@ export default function ModelSelectionModal({
       costPerMillion: model.combinedPrice,
       selected: selectedModels.has(model.id),
       available: true,
-      tier: model.tier as 'flagship' | 'standard' | 'fast'
+      tier: (model.tier || 'standard') as 'flagship' | 'standard' | 'fast'
     }));
   }, [selectedModels]);
 

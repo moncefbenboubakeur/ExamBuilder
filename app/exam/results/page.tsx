@@ -86,6 +86,10 @@ function ResultsContent() {
     }
   };
 
+  const handleReview = () => {
+    router.push(`/exam/review?sessionId=${sessionId}`);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-gray-900">
@@ -123,6 +127,7 @@ function ResultsContent() {
           score={results.score}
           onRetryAll={handleRetryAll}
           onRetryWrong={handleRetryWrong}
+          onReview={handleReview}
           hasWrongAnswers={results.wrongQuestionIds.length > 0}
         />
       </div>

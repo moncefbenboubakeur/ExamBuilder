@@ -17,19 +17,19 @@ export default function ExamStats({
   score,
 }: ExamStatsProps) {
   const getScoreColor = () => {
-    if (score >= 90) return 'text-green-600';
-    if (score >= 80) return 'text-blue-600';
-    if (score >= 70) return 'text-amber-600';
-    if (score >= 60) return 'text-orange-600';
-    return 'text-red-600';
+    if (score >= 90) return 'text-green-600 dark:text-green-400';
+    if (score >= 80) return 'text-blue-600 dark:text-blue-400';
+    if (score >= 70) return 'text-amber-600 dark:text-amber-400';
+    if (score >= 60) return 'text-orange-600 dark:text-orange-400';
+    return 'text-red-600 dark:text-red-400';
   };
 
   const getScoreBgColor = () => {
-    if (score >= 90) return 'from-green-50 to-emerald-50 border-green-300';
-    if (score >= 80) return 'from-blue-50 to-indigo-50 border-blue-300';
-    if (score >= 70) return 'from-amber-50 to-yellow-50 border-amber-300';
-    if (score >= 60) return 'from-orange-50 to-amber-50 border-orange-300';
-    return 'from-red-50 to-pink-50 border-red-300';
+    if (score >= 90) return 'from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 border-green-300 dark:border-green-700';
+    if (score >= 80) return 'from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 border-blue-300 dark:border-blue-700';
+    if (score >= 70) return 'from-amber-50 to-yellow-50 dark:from-amber-900/30 dark:to-yellow-900/30 border-amber-300 dark:border-amber-700';
+    if (score >= 60) return 'from-orange-50 to-amber-50 dark:from-orange-900/30 dark:to-amber-900/30 border-orange-300 dark:border-orange-700';
+    return 'from-red-50 to-pink-50 dark:from-red-900/30 dark:to-pink-900/30 border-red-300 dark:border-red-700';
   };
 
   const getGrade = () => {

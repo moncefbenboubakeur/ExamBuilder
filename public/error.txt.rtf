@@ -1,0 +1,630 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2822
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \uc0\u55358 \u56598  Processing with model: Claude Sonnet 4.5 (anthropic)\
+  \uc0\u55357 \u56590  Analyzing Qc30edc43... with Claude Sonnet 4.5\
+  \uc0\u55357 \u56590  Analyzing Qa4856ad8... with Claude Sonnet 4.5\
+  \uc0\u55357 \u56590  Analyzing Q31eea316... with Claude Sonnet 4.5\
+  \uc0\u55357 \u56590  Analyzing Q076d36af... with Claude Sonnet 4.5\
+  \uc0\u55357 \u56590  Analyzing Q311b6eca... with Claude Sonnet 4.5\
+  \uc0\u55357 \u56590  Analyzing Q0d781149... with Claude Sonnet 4.5\
+  \uc0\u55357 \u56590  Analyzing Qbc3809ea... with Claude Sonnet 4.5\
+  \uc0\u55357 \u56590  Analyzing Qf73e0137... with Claude Sonnet 4.5\
+  \uc0\u55357 \u56590  Analyzing Q2082cfdb... with Claude Sonnet 4.5\
+  \uc0\u55357 \u56590  Analyzing Qdb2ca36a... with Claude Sonnet 4.5\
+  \uc0\u55357 \u56590  Analyzing Q5b698405... with Claude Sonnet 4.5\
+  \uc0\u55357 \u56590  Analyzing Q429ef9e2... with Claude Sonnet 4.5\
+\
+\uc0\u55358 \u56598  Processing with model: GPT-5 Nano (openai)\
+  \uc0\u55357 \u56590  Analyzing Qc30edc43... with GPT-5 Nano\
+  \uc0\u55357 \u56590  Analyzing Qa4856ad8... with GPT-5 Nano\
+  \uc0\u55357 \u56590  Analyzing Q31eea316... with GPT-5 Nano\
+  \uc0\u55357 \u56590  Analyzing Q076d36af... with GPT-5 Nano\
+  \uc0\u55357 \u56590  Analyzing Q311b6eca... with GPT-5 Nano\
+Failed to analyze Q076d36af-32ff-463e-8f20-029645ef5471 with GPT-5 Nano: Error: 400 Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.\
+    at APIError.generate (../src/core/error.ts:72:14)\
+    at OpenAI.makeStatusError (src/client.ts:478:28)\
+    at OpenAI.makeRequest (src/client.ts:728:24)\
+    at async analyzeQuestionWithModel (app/api/ai/analyze-questions-multi/route.ts:244:24)\
+    at async (app/api/ai/analyze-questions-multi/route.ts:82:30)\
+    at async POST (app/api/ai/analyze-questions-multi/route.ts:132:30)\
+  242 |     \});\
+  243 |\
+> 244 |     const completion = await openai.chat.completions.create(\{\
+      |                        ^\
+  245 |       model: model.id,\
+  246 |       messages: [\
+  247 |         \{ \{\
+  status: 400,\
+  headers: Headers \{\
+    date: 'Sat, 18 Oct 2025 07:51:13 GMT',\
+    'content-type': 'application/json',\
+    'content-length': '245',\
+    connection: 'keep-alive',\
+    'access-control-expose-headers': 'X-Request-ID',\
+    'openai-organization': 'user-c1dujfbx6strkptqzk0qndks',\
+    'openai-processing-ms': '9',\
+    'openai-project': 'proj_9vYkkjL3g18OhxxVcWz7VCba',\
+    'openai-version': '2020-10-01',\
+    'x-envoy-upstream-service-time': '23',\
+    'x-ratelimit-limit-requests': '500',\
+    'x-ratelimit-limit-tokens': '200000',\
+    'x-ratelimit-remaining-requests': '499',\
+    'x-ratelimit-remaining-tokens': '199769',\
+    'x-ratelimit-reset-requests': '120ms',\
+    'x-ratelimit-reset-tokens': '69ms',\
+    'x-request-id': 'req_0a16ba6952b848258e05c15e7597e2e0',\
+    'x-openai-proxy-wasm': 'v0.1',\
+    'cf-cache-status': 'DYNAMIC',\
+    'set-cookie': '__cf_bm=JHm8TiYudkOwcvM8v0o_OXrq9H_S_Ey.lC0gHAYU00w-1760773873-1.0.1.1-bSFBhH4kW3NE70Tjeb72567kF4mwQGr9oxsZXGAvY3eFXNn5e38DprOem40nyV7J1SzrIBap.1hBaIAuY7uYYmtvRw5KIxOPjHQ_LaHGuZg; path=/; expires=Sat, 18-Oct-25 08:21:13 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=mOKiXl.Rom20rybIQjSpb33yhq9s9VvPEp2TVrAePbI-1760773873356-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None',\
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',\
+    'x-content-type-options': 'nosniff',\
+    server: 'cloudflare',\
+    'cf-ray': '990673036bf1f982-PRG',\
+    'alt-svc': 'h3=":443"; ma=86400'\
+  \},\
+  requestID: 'req_0a16ba6952b848258e05c15e7597e2e0',\
+  error: [Object],\
+  code: 'unsupported_parameter',\
+  param: 'max_tokens',\
+  type: 'invalid_request_error'\
+\}\
+Failed to analyze Q31eea316-ef50-4bec-9023-ea8e9c82b2a2 with GPT-5 Nano: Error: 400 Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.\
+    at APIError.generate (../src/core/error.ts:72:14)\
+    at OpenAI.makeStatusError (src/client.ts:478:28)\
+    at OpenAI.makeRequest (src/client.ts:728:24)\
+    at async analyzeQuestionWithModel (app/api/ai/analyze-questions-multi/route.ts:244:24)\
+    at async (app/api/ai/analyze-questions-multi/route.ts:82:30)\
+    at async POST (app/api/ai/analyze-questions-multi/route.ts:132:30)\
+  242 |     \});\
+  243 |\
+> 244 |     const completion = await openai.chat.completions.create(\{\
+      |                        ^\
+  245 |       model: model.id,\
+  246 |       messages: [\
+  247 |         \{ \{\
+  status: 400,\
+  headers: Headers \{\
+    date: 'Sat, 18 Oct 2025 07:51:13 GMT',\
+    'content-type': 'application/json',\
+    'content-length': '245',\
+    connection: 'keep-alive',\
+    'access-control-expose-headers': 'X-Request-ID',\
+    'openai-organization': 'user-c1dujfbx6strkptqzk0qndks',\
+    'openai-processing-ms': '12',\
+    'openai-project': 'proj_9vYkkjL3g18OhxxVcWz7VCba',\
+    'openai-version': '2020-10-01',\
+    'x-envoy-upstream-service-time': '41',\
+    'x-ratelimit-limit-requests': '500',\
+    'x-ratelimit-limit-tokens': '200000',\
+    'x-ratelimit-remaining-requests': '499',\
+    'x-ratelimit-remaining-tokens': '199787',\
+    'x-ratelimit-reset-requests': '120ms',\
+    'x-ratelimit-reset-tokens': '63ms',\
+    'x-request-id': 'req_a360329ce26e48808138ede7923a0179',\
+    'x-openai-proxy-wasm': 'v0.1',\
+    'cf-cache-status': 'DYNAMIC',\
+    'set-cookie': '__cf_bm=8I.3hSAbrBfzBPCQ3R4b2KS.wo2pc4nKksszRe_OiOI-1760773873-1.0.1.1-5K3.Unm_O_uctXWcjZFcKcTnXzAMg.zqTszaOWoSQvHZr3ncVMFSZxhelNQFe4Xjas0j8EqYlTJ2wUfNBQQCIEdrhsHOi9fB_bQwgTar__c; path=/; expires=Sat, 18-Oct-25 08:21:13 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=0F_kFn5tHx9Bxf4MQLc_Vt..RolQ0eccD49m_igOI_0-1760773873389-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None',\
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',\
+    'x-content-type-options': 'nosniff',\
+    server: 'cloudflare',\
+    'cf-ray': '990673036c4b58b7-PRG',\
+    'alt-svc': 'h3=":443"; ma=86400'\
+  \},\
+  requestID: 'req_a360329ce26e48808138ede7923a0179',\
+  error: [Object],\
+  code: 'unsupported_parameter',\
+  param: 'max_tokens',\
+  type: 'invalid_request_error'\
+\}\
+Failed to analyze Qa4856ad8-20b7-4be9-ba5f-ed87572f1fb8 with GPT-5 Nano: Error: 400 Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.\
+    at APIError.generate (../src/core/error.ts:72:14)\
+    at OpenAI.makeStatusError (src/client.ts:478:28)\
+    at OpenAI.makeRequest (src/client.ts:728:24)\
+    at async analyzeQuestionWithModel (app/api/ai/analyze-questions-multi/route.ts:244:24)\
+    at async (app/api/ai/analyze-questions-multi/route.ts:82:30)\
+    at async POST (app/api/ai/analyze-questions-multi/route.ts:132:30)\
+  242 |     \});\
+  243 |\
+> 244 |     const completion = await openai.chat.completions.create(\{\
+      |                        ^\
+  245 |       model: model.id,\
+  246 |       messages: [\
+  247 |         \{ \{\
+  status: 400,\
+  headers: Headers \{\
+    date: 'Sat, 18 Oct 2025 07:51:13 GMT',\
+    'content-type': 'application/json',\
+    'content-length': '245',\
+    connection: 'keep-alive',\
+    'access-control-expose-headers': 'X-Request-ID',\
+    'openai-organization': 'user-c1dujfbx6strkptqzk0qndks',\
+    'openai-processing-ms': '21',\
+    'openai-project': 'proj_9vYkkjL3g18OhxxVcWz7VCba',\
+    'openai-version': '2020-10-01',\
+    'x-envoy-upstream-service-time': '39',\
+    'x-ratelimit-limit-requests': '500',\
+    'x-ratelimit-limit-tokens': '200000',\
+    'x-ratelimit-remaining-requests': '499',\
+    'x-ratelimit-remaining-tokens': '199774',\
+    'x-ratelimit-reset-requests': '120ms',\
+    'x-ratelimit-reset-tokens': '67ms',\
+    'x-request-id': 'req_94ec8dbf94f647ee9fcf0bf7168fd852',\
+    'x-openai-proxy-wasm': 'v0.1',\
+    'cf-cache-status': 'DYNAMIC',\
+    'set-cookie': '__cf_bm=K0563zgPH0irqA.q2cKZts4qgxCMLrFmIkGSOwKE0wE-1760773873-1.0.1.1-0eR.sJaJ8r1bHA_f7T..yl3IVc7Mm33GLUlssXPVbFTCw.z6pld.yfd1cW10lodqMRv1SuNfYbUt4MZFj4UEfBzZfrlT5kqNOlwznsO3Tzw; path=/; expires=Sat, 18-Oct-25 08:21:13 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=4HwrvwcGCGCkVetwQtqVuqDOC92XEWHZugoTIjNgmFI-1760773873391-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None',\
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',\
+    'x-content-type-options': 'nosniff',\
+    server: 'cloudflare',\
+    'cf-ray': '990673036f081e28-PRG',\
+    'alt-svc': 'h3=":443"; ma=86400'\
+  \},\
+  requestID: 'req_94ec8dbf94f647ee9fcf0bf7168fd852',\
+  error: [Object],\
+  code: 'unsupported_parameter',\
+  param: 'max_tokens',\
+  type: 'invalid_request_error'\
+\}\
+Failed to analyze Qc30edc43-eae3-436a-9428-54919a9758c6 with GPT-5 Nano: Error: 400 Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.\
+    at APIError.generate (../src/core/error.ts:72:14)\
+    at OpenAI.makeStatusError (src/client.ts:478:28)\
+    at OpenAI.makeRequest (src/client.ts:728:24)\
+    at async analyzeQuestionWithModel (app/api/ai/analyze-questions-multi/route.ts:244:24)\
+    at async (app/api/ai/analyze-questions-multi/route.ts:82:30)\
+    at async POST (app/api/ai/analyze-questions-multi/route.ts:132:30)\
+  242 |     \});\
+  243 |\
+> 244 |     const completion = await openai.chat.completions.create(\{\
+      |                        ^\
+  245 |       model: model.id,\
+  246 |       messages: [\
+  247 |         \{ \{\
+  status: 400,\
+  headers: Headers \{\
+    date: 'Sat, 18 Oct 2025 07:51:13 GMT',\
+    'content-type': 'application/json',\
+    'content-length': '245',\
+    connection: 'keep-alive',\
+    'access-control-expose-headers': 'X-Request-ID',\
+    'openai-organization': 'user-c1dujfbx6strkptqzk0qndks',\
+    'openai-processing-ms': '22',\
+    'openai-project': 'proj_9vYkkjL3g18OhxxVcWz7VCba',\
+    'openai-version': '2020-10-01',\
+    'x-envoy-upstream-service-time': '51',\
+    'x-ratelimit-limit-requests': '500',\
+    'x-ratelimit-limit-tokens': '200000',\
+    'x-ratelimit-remaining-requests': '499',\
+    'x-ratelimit-remaining-tokens': '199781',\
+    'x-ratelimit-reset-requests': '120ms',\
+    'x-ratelimit-reset-tokens': '65ms',\
+    'x-request-id': 'req_20c1c4ea22ed44f4b4028ec330635290',\
+    'x-openai-proxy-wasm': 'v0.1',\
+    'cf-cache-status': 'DYNAMIC',\
+    'set-cookie': '__cf_bm=k32vlBNLld0hNK0J5cbClk8suFhJyPhUvfJiDTBo6xQ-1760773873-1.0.1.1-R4ml6ztBGLHJPEdHyXPSXDJm81YA17bVYT.xVpniOxv2q49YG.4ZwX6HAJSB0w251VWcfTto8d8hz2lLMmIXUgDHDVOEIqerD7Cq8temzY8; path=/; expires=Sat, 18-Oct-25 08:21:13 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=1efB_lEWzaSbXJxk_NccqXBy2dfM72_2I.Q2oky3lu0-1760773873413-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None',\
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',\
+    'x-content-type-options': 'nosniff',\
+    server: 'cloudflare',\
+    'cf-ray': '990673035a30f98a-PRG',\
+    'alt-svc': 'h3=":443"; ma=86400'\
+  \},\
+  requestID: 'req_20c1c4ea22ed44f4b4028ec330635290',\
+  error: [Object],\
+  code: 'unsupported_parameter',\
+  param: 'max_tokens',\
+  type: 'invalid_request_error'\
+\}\
+Failed to analyze Q311b6eca-b490-4d63-ab3a-3751bc5c829a with GPT-5 Nano: Error: 400 Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.\
+    at APIError.generate (../src/core/error.ts:72:14)\
+    at OpenAI.makeStatusError (src/client.ts:478:28)\
+    at OpenAI.makeRequest (src/client.ts:728:24)\
+    at async analyzeQuestionWithModel (app/api/ai/analyze-questions-multi/route.ts:244:24)\
+    at async (app/api/ai/analyze-questions-multi/route.ts:82:30)\
+    at async POST (app/api/ai/analyze-questions-multi/route.ts:132:30)\
+  242 |     \});\
+  243 |\
+> 244 |     const completion = await openai.chat.completions.create(\{\
+      |                        ^\
+  245 |       model: model.id,\
+  246 |       messages: [\
+  247 |         \{ \{\
+  status: 400,\
+  headers: Headers \{\
+    date: 'Sat, 18 Oct 2025 07:51:13 GMT',\
+    'content-type': 'application/json',\
+    'content-length': '245',\
+    connection: 'keep-alive',\
+    'access-control-expose-headers': 'X-Request-ID',\
+    'openai-organization': 'user-c1dujfbx6strkptqzk0qndks',\
+    'openai-processing-ms': '28',\
+    'openai-project': 'proj_9vYkkjL3g18OhxxVcWz7VCba',\
+    'openai-version': '2020-10-01',\
+    'x-envoy-upstream-service-time': '61',\
+    'x-ratelimit-limit-requests': '500',\
+    'x-ratelimit-limit-tokens': '200000',\
+    'x-ratelimit-remaining-requests': '499',\
+    'x-ratelimit-remaining-tokens': '199790',\
+    'x-ratelimit-reset-requests': '120ms',\
+    'x-ratelimit-reset-tokens': '63ms',\
+    'x-request-id': 'req_0174da2be1ed4666b13db808dd2c75ed',\
+    'x-openai-proxy-wasm': 'v0.1',\
+    'cf-cache-status': 'DYNAMIC',\
+    'set-cookie': '__cf_bm=9xyE1G.hfmJvtKZlJ5eHzhZzGjk3W5oo25SZB0BcaoI-1760773873-1.0.1.1-eHRd7iMSv4aeZGrEmtdQ0xIQ23tE1cjMCUzIfesvPUFOtszK5qdyPLNiyEQivEXGYMPa4.vfDUs7D_.3NbS.toxmVyW05EhGzfkHEHAKaFQ; path=/; expires=Sat, 18-Oct-25 08:21:13 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=V3LjRgw2VPLW6AVuOg0xvil3z43e2tI2Qfuw9XmzMgs-1760773873417-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None',\
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',\
+    'x-content-type-options': 'nosniff',\
+    server: 'cloudflare',\
+    'cf-ray': '990673036c03b3dc-PRG',\
+    'alt-svc': 'h3=":443"; ma=86400'\
+  \},\
+  requestID: 'req_0174da2be1ed4666b13db808dd2c75ed',\
+  error: [Object],\
+  code: 'unsupported_parameter',\
+  param: 'max_tokens',\
+  type: 'invalid_request_error'\
+\}\
+  \uc0\u55357 \u56590  Analyzing Q0d781149... with GPT-5 Nano\
+  \uc0\u55357 \u56590  Analyzing Qbc3809ea... with GPT-5 Nano\
+  \uc0\u55357 \u56590  Analyzing Qf73e0137... with GPT-5 Nano\
+  \uc0\u55357 \u56590  Analyzing Q2082cfdb... with GPT-5 Nano\
+  \uc0\u55357 \u56590  Analyzing Qdb2ca36a... with GPT-5 Nano\
+Failed to analyze Qf73e0137-b81d-43ed-9259-e8bf8a6b276a with GPT-5 Nano: Error: 400 Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.\
+    at APIError.generate (../src/core/error.ts:72:14)\
+    at OpenAI.makeStatusError (src/client.ts:478:28)\
+    at OpenAI.makeRequest (src/client.ts:728:24)\
+    at async analyzeQuestionWithModel (app/api/ai/analyze-questions-multi/route.ts:244:24)\
+    at async (app/api/ai/analyze-questions-multi/route.ts:82:30)\
+    at async POST (app/api/ai/analyze-questions-multi/route.ts:132:30)\
+  242 |     \});\
+  243 |\
+> 244 |     const completion = await openai.chat.completions.create(\{\
+      |                        ^\
+  245 |       model: model.id,\
+  246 |       messages: [\
+  247 |         \{ \{\
+  status: 400,\
+  headers: Headers \{\
+    date: 'Sat, 18 Oct 2025 07:51:15 GMT',\
+    'content-type': 'application/json',\
+    'content-length': '245',\
+    connection: 'keep-alive',\
+    'access-control-expose-headers': 'X-Request-ID',\
+    'openai-organization': 'user-c1dujfbx6strkptqzk0qndks',\
+    'openai-processing-ms': '10',\
+    'openai-project': 'proj_9vYkkjL3g18OhxxVcWz7VCba',\
+    'openai-version': '2020-10-01',\
+    'x-envoy-upstream-service-time': '24',\
+    'x-ratelimit-limit-requests': '500',\
+    'x-ratelimit-limit-tokens': '200000',\
+    'x-ratelimit-remaining-requests': '499',\
+    'x-ratelimit-remaining-tokens': '199791',\
+    'x-ratelimit-reset-requests': '120ms',\
+    'x-ratelimit-reset-tokens': '62ms',\
+    'x-request-id': 'req_0a6d4564bbd243eb8bebea20d72f3753',\
+    'x-openai-proxy-wasm': 'v0.1',\
+    'cf-cache-status': 'DYNAMIC',\
+    'set-cookie': '__cf_bm=2KEfyx8gAvVxRBlqL4FaCvDt32puw2W9HDIKffkAtPA-1760773875-1.0.1.1-8_2Y4nZr8R2Auyz7l4vqr3EYYAPzNnPrSbF2BpxYtje7vhNopK6Ld2IOo3rDdqQw.pi5afKvG7DeNAsJVRsbVKBmVfR_GOx5szNM_fT8XjM; path=/; expires=Sat, 18-Oct-25 08:21:15 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=BBCmhyN2pBZEh3TSeNfgxa7a4BJG_MJx8_.PskaCxAk-1760773875207-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None',\
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',\
+    'x-content-type-options': 'nosniff',\
+    server: 'cloudflare',\
+    'cf-ray': '9906730efae258b7-PRG',\
+    'alt-svc': 'h3=":443"; ma=86400'\
+  \},\
+  requestID: 'req_0a6d4564bbd243eb8bebea20d72f3753',\
+  error: [Object],\
+  code: 'unsupported_parameter',\
+  param: 'max_tokens',\
+  type: 'invalid_request_error'\
+\}\
+Failed to analyze Q0d781149-55f0-42ca-9ad5-916de7da8317 with GPT-5 Nano: Error: 400 Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.\
+    at APIError.generate (../src/core/error.ts:72:14)\
+    at OpenAI.makeStatusError (src/client.ts:478:28)\
+    at OpenAI.makeRequest (src/client.ts:728:24)\
+    at async analyzeQuestionWithModel (app/api/ai/analyze-questions-multi/route.ts:244:24)\
+    at async (app/api/ai/analyze-questions-multi/route.ts:82:30)\
+    at async POST (app/api/ai/analyze-questions-multi/route.ts:132:30)\
+  242 |     \});\
+  243 |\
+> 244 |     const completion = await openai.chat.completions.create(\{\
+      |                        ^\
+  245 |       model: model.id,\
+  246 |       messages: [\
+  247 |         \{ \{\
+  status: 400,\
+  headers: Headers \{\
+    date: 'Sat, 18 Oct 2025 07:51:15 GMT',\
+    'content-type': 'application/json',\
+    'content-length': '245',\
+    connection: 'keep-alive',\
+    'access-control-expose-headers': 'X-Request-ID',\
+    'openai-organization': 'user-c1dujfbx6strkptqzk0qndks',\
+    'openai-processing-ms': '10',\
+    'openai-project': 'proj_9vYkkjL3g18OhxxVcWz7VCba',\
+    'openai-version': '2020-10-01',\
+    'x-envoy-upstream-service-time': '23',\
+    'x-ratelimit-limit-requests': '500',\
+    'x-ratelimit-limit-tokens': '200000',\
+    'x-ratelimit-remaining-requests': '498',\
+    'x-ratelimit-remaining-tokens': '199574',\
+    'x-ratelimit-reset-requests': '238ms',\
+    'x-ratelimit-reset-tokens': '127ms',\
+    'x-request-id': 'req_d552d054b4944d54a169587d653cf5ee',\
+    'x-openai-proxy-wasm': 'v0.1',\
+    'cf-cache-status': 'DYNAMIC',\
+    'set-cookie': '__cf_bm=c1Sr74yE6A_uPW7BiF.lpzj_bZFcH3R.245ENHhFPmM-1760773875-1.0.1.1-w2ymVcUCHA2XHbH5cuuIq6huSqC1xswecaN7NUv6c.6HbTRWkOgDlQ2kXxQuRLw5pn2fKc1VvEKqcK7tQjLrpZaoxJjNSUrwJjtJdvcqmu8; path=/; expires=Sat, 18-Oct-25 08:21:15 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=UTG6ib8LquDec93T5107NKlFc0UDwMkWuF97AckXgao-1760773875214-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None',\
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',\
+    'x-content-type-options': 'nosniff',\
+    server: 'cloudflare',\
+    'cf-ray': '9906730efaecf98a-PRG',\
+    'alt-svc': 'h3=":443"; ma=86400'\
+  \},\
+  requestID: 'req_d552d054b4944d54a169587d653cf5ee',\
+  error: [Object],\
+  code: 'unsupported_parameter',\
+  param: 'max_tokens',\
+  type: 'invalid_request_error'\
+\}\
+Failed to analyze Qdb2ca36a-3443-499c-8541-14d70942b895 with GPT-5 Nano: Error: 400 Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.\
+    at APIError.generate (../src/core/error.ts:72:14)\
+    at OpenAI.makeStatusError (src/client.ts:478:28)\
+    at OpenAI.makeRequest (src/client.ts:728:24)\
+    at async analyzeQuestionWithModel (app/api/ai/analyze-questions-multi/route.ts:244:24)\
+    at async (app/api/ai/analyze-questions-multi/route.ts:82:30)\
+    at async POST (app/api/ai/analyze-questions-multi/route.ts:132:30)\
+  242 |     \});\
+  243 |\
+> 244 |     const completion = await openai.chat.completions.create(\{\
+      |                        ^\
+  245 |       model: model.id,\
+  246 |       messages: [\
+  247 |         \{ \{\
+  status: 400,\
+  headers: Headers \{\
+    date: 'Sat, 18 Oct 2025 07:51:15 GMT',\
+    'content-type': 'application/json',\
+    'content-length': '245',\
+    connection: 'keep-alive',\
+    'access-control-expose-headers': 'X-Request-ID',\
+    'openai-organization': 'user-c1dujfbx6strkptqzk0qndks',\
+    'openai-processing-ms': '12',\
+    'openai-project': 'proj_9vYkkjL3g18OhxxVcWz7VCba',\
+    'openai-version': '2020-10-01',\
+    'x-envoy-upstream-service-time': '27',\
+    'x-ratelimit-limit-requests': '500',\
+    'x-ratelimit-limit-tokens': '200000',\
+    'x-ratelimit-remaining-requests': '499',\
+    'x-ratelimit-remaining-tokens': '199788',\
+    'x-ratelimit-reset-requests': '120ms',\
+    'x-ratelimit-reset-tokens': '63ms',\
+    'x-request-id': 'req_389802de1996487fbae25594e36263c0',\
+    'x-openai-proxy-wasm': 'v0.1',\
+    'cf-cache-status': 'DYNAMIC',\
+    'set-cookie': '__cf_bm=Vp7nOqQFviJNLZd7XAjRd6vm.MyY8sR8jye7wBuCuhg-1760773875-1.0.1.1-nY7Qdt1oyyfr_oEKq1R4.N6TEJmDq64OazrM6YB1QFbEfh1LrpnlZK4kFXrSbqi9gomzQrR4NI6UiLNRkZ1pb6GzMPIDEEHhN7SNxRfoVGM; path=/; expires=Sat, 18-Oct-25 08:21:15 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=RAh4Z1rhw1NolaIQr_ICEEO51JjZy4AZnjy2WPpV9C4-1760773875236-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None',\
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',\
+    'x-content-type-options': 'nosniff',\
+    server: 'cloudflare',\
+    'cf-ray': '9906730f2f17b3dc-PRG',\
+    'alt-svc': 'h3=":443"; ma=86400'\
+  \},\
+  requestID: 'req_389802de1996487fbae25594e36263c0',\
+  error: [Object],\
+  code: 'unsupported_parameter',\
+  param: 'max_tokens',\
+  type: 'invalid_request_error'\
+\}\
+Failed to analyze Qbc3809ea-d1a7-4f26-8d7a-a9ac76330ee5 with GPT-5 Nano: Error: 400 Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.\
+    at APIError.generate (../src/core/error.ts:72:14)\
+    at OpenAI.makeStatusError (src/client.ts:478:28)\
+    at OpenAI.makeRequest (src/client.ts:728:24)\
+    at async analyzeQuestionWithModel (app/api/ai/analyze-questions-multi/route.ts:244:24)\
+    at async (app/api/ai/analyze-questions-multi/route.ts:82:30)\
+    at async POST (app/api/ai/analyze-questions-multi/route.ts:132:30)\
+  242 |     \});\
+  243 |\
+> 244 |     const completion = await openai.chat.completions.create(\{\
+      |                        ^\
+  245 |       model: model.id,\
+  246 |       messages: [\
+  247 |         \{ \{\
+  status: 400,\
+  headers: Headers \{\
+    date: 'Sat, 18 Oct 2025 07:51:15 GMT',\
+    'content-type': 'application/json',\
+    'content-length': '245',\
+    connection: 'keep-alive',\
+    'access-control-expose-headers': 'X-Request-ID',\
+    'openai-organization': 'user-c1dujfbx6strkptqzk0qndks',\
+    'openai-processing-ms': '26',\
+    'openai-project': 'proj_9vYkkjL3g18OhxxVcWz7VCba',\
+    'openai-version': '2020-10-01',\
+    'x-envoy-upstream-service-time': '49',\
+    'x-ratelimit-limit-requests': '500',\
+    'x-ratelimit-limit-tokens': '200000',\
+    'x-ratelimit-remaining-requests': '499',\
+    'x-ratelimit-remaining-tokens': '199797',\
+    'x-ratelimit-reset-requests': '120ms',\
+    'x-ratelimit-reset-tokens': '60ms',\
+    'x-request-id': 'req_26962e8cb3a3482b8ea59a7320359171',\
+    'x-openai-proxy-wasm': 'v0.1',\
+    'cf-cache-status': 'DYNAMIC',\
+    'set-cookie': '__cf_bm=CG8GBSjF9PIX9CsyjW.sL1LSIhcvHlttqFO_ypxBmjw-1760773875-1.0.1.1-SiY1neJwIatiJtN17bRz6nMY7s2g6ujr_GTrXN2i5_o9fQYa2yfknJBZDFc0I7uB97qSL3QKL1TgYpq_Arwv8XVQf0YhY3LXsmDOhbC25mI; path=/; expires=Sat, 18-Oct-25 08:21:15 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=suHUo4fKxz3MW.KaqiqxE2jVqV8bXBd8wcglsWCbjzI-1760773875275-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None',\
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',\
+    'x-content-type-options': 'nosniff',\
+    server: 'cloudflare',\
+    'cf-ray': '9906730f2b0f1e28-PRG',\
+    'alt-svc': 'h3=":443"; ma=86400'\
+  \},\
+  requestID: 'req_26962e8cb3a3482b8ea59a7320359171',\
+  error: [Object],\
+  code: 'unsupported_parameter',\
+  param: 'max_tokens',\
+  type: 'invalid_request_error'\
+\}\
+Failed to analyze Q2082cfdb-384c-4d79-8a88-f982284e4ba2 with GPT-5 Nano: Error: 400 Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.\
+    at APIError.generate (../src/core/error.ts:72:14)\
+    at OpenAI.makeStatusError (src/client.ts:478:28)\
+    at OpenAI.makeRequest (src/client.ts:728:24)\
+    at async analyzeQuestionWithModel (app/api/ai/analyze-questions-multi/route.ts:244:24)\
+    at async (app/api/ai/analyze-questions-multi/route.ts:82:30)\
+    at async POST (app/api/ai/analyze-questions-multi/route.ts:132:30)\
+  242 |     \});\
+  243 |\
+> 244 |     const completion = await openai.chat.completions.create(\{\
+      |                        ^\
+  245 |       model: model.id,\
+  246 |       messages: [\
+  247 |         \{ \{\
+  status: 400,\
+  headers: Headers \{\
+    date: 'Sat, 18 Oct 2025 07:51:15 GMT',\
+    'content-type': 'application/json',\
+    'content-length': '245',\
+    connection: 'keep-alive',\
+    'access-control-expose-headers': 'X-Request-ID',\
+    'openai-organization': 'user-c1dujfbx6strkptqzk0qndks',\
+    'openai-processing-ms': '19',\
+    'openai-project': 'proj_9vYkkjL3g18OhxxVcWz7VCba',\
+    'openai-version': '2020-10-01',\
+    'x-envoy-upstream-service-time': '42',\
+    'x-ratelimit-limit-requests': '500',\
+    'x-ratelimit-limit-tokens': '200000',\
+    'x-ratelimit-remaining-requests': '499',\
+    'x-ratelimit-remaining-tokens': '199771',\
+    'x-ratelimit-reset-requests': '120ms',\
+    'x-ratelimit-reset-tokens': '68ms',\
+    'x-request-id': 'req_258b8f25c83540e9ae8fc30719e6504f',\
+    'x-openai-proxy-wasm': 'v0.1',\
+    'cf-cache-status': 'DYNAMIC',\
+    'set-cookie': '__cf_bm=xLI2qlBd1jsFjADw.wdt7bFn5aBwPRFtJ8gM8K7HZRI-1760773875-1.0.1.1-sWM_u7yc8qffkRBcbILShYZUJl6PwOqO5iNNcvH2BhSXI0uzAmHpeg0vEqXNmWQNt6Eb_oCNUFukpyVIjprF6n_sTjTEqQj8x3l0FU5bCNQ; path=/; expires=Sat, 18-Oct-25 08:21:15 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=iT0KXMI7WSw2zuQa.JRKWGbZzY.5f8c2Hej8LWNg1_c-1760773875607-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None',\
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',\
+    'x-content-type-options': 'nosniff',\
+    server: 'cloudflare',\
+    'cf-ray': '9906730f2bd0f982-PRG',\
+    'alt-svc': 'h3=":443"; ma=86400'\
+  \},\
+  requestID: 'req_258b8f25c83540e9ae8fc30719e6504f',\
+  error: [Object],\
+  code: 'unsupported_parameter',\
+  param: 'max_tokens',\
+  type: 'invalid_request_error'\
+\}\
+  \uc0\u55357 \u56590  Analyzing Q5b698405... with GPT-5 Nano\
+  \uc0\u55357 \u56590  Analyzing Q429ef9e2... with GPT-5 Nano\
+Failed to analyze Q5b698405-a6fe-46b1-a712-0c00f7f48eea with GPT-5 Nano: Error: 400 Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.\
+    at APIError.generate (../src/core/error.ts:72:14)\
+    at OpenAI.makeStatusError (src/client.ts:478:28)\
+    at OpenAI.makeRequest (src/client.ts:728:24)\
+    at async analyzeQuestionWithModel (app/api/ai/analyze-questions-multi/route.ts:244:24)\
+    at async (app/api/ai/analyze-questions-multi/route.ts:82:30)\
+    at async POST (app/api/ai/analyze-questions-multi/route.ts:132:30)\
+  242 |     \});\
+  243 |\
+> 244 |     const completion = await openai.chat.completions.create(\{\
+      |                        ^\
+  245 |       model: model.id,\
+  246 |       messages: [\
+  247 |         \{ \{\
+  status: 400,\
+  headers: Headers \{\
+    date: 'Sat, 18 Oct 2025 07:51:17 GMT',\
+    'content-type': 'application/json',\
+    'content-length': '245',\
+    connection: 'keep-alive',\
+    'access-control-expose-headers': 'X-Request-ID',\
+    'openai-organization': 'user-c1dujfbx6strkptqzk0qndks',\
+    'openai-processing-ms': '21',\
+    'openai-project': 'proj_9vYkkjL3g18OhxxVcWz7VCba',\
+    'openai-version': '2020-10-01',\
+    'x-envoy-upstream-service-time': '219',\
+    'x-ratelimit-limit-requests': '500',\
+    'x-ratelimit-limit-tokens': '200000',\
+    'x-ratelimit-remaining-requests': '499',\
+    'x-ratelimit-remaining-tokens': '199774',\
+    'x-ratelimit-reset-requests': '120ms',\
+    'x-ratelimit-reset-tokens': '67ms',\
+    'x-request-id': 'req_fc2827e8fb5490eea7ef82a76fe96cb8',\
+    'x-openai-proxy-wasm': 'v0.1',\
+    'cf-cache-status': 'DYNAMIC',\
+    'set-cookie': '__cf_bm=uT0BQ99NHV7y0mgn3BVbEW.lUIYg5EqMb_3gD7xJcNM-1760773877-1.0.1.1-BAyWQxu.r0rZBPt1R9uIaxlb9ngmaG4lMRfLVX_hodCr5lAgN.xWVpc5gAtAurge1wivUBFNpmDCbNNpWWuX1Edf7wW_E2qRrQRzWmLcMOU; path=/; expires=Sat, 18-Oct-25 08:21:17 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=5pRl9nlkGDwevDT0FK4TIz6T53ok0UHwDri0XiXOAOA-1760773877610-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None',\
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',\
+    'x-content-type-options': 'nosniff',\
+    server: 'cloudflare',\
+    'cf-ray': '99067319bebaf98a-PRG',\
+    'alt-svc': 'h3=":443"; ma=86400'\
+  \},\
+  requestID: 'req_fc2827e8fb5490eea7ef82a76fe96cb8',\
+  error: [Object],\
+  code: 'unsupported_parameter',\
+  param: 'max_tokens',\
+  type: 'invalid_request_error'\
+\}\
+Failed to analyze Q429ef9e2-5e0a-4572-9bf2-a62cdb838741 with GPT-5 Nano: Error: 400 Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.\
+    at APIError.generate (../src/core/error.ts:72:14)\
+    at OpenAI.makeStatusError (src/client.ts:478:28)\
+    at OpenAI.makeRequest (src/client.ts:728:24)\
+    at async analyzeQuestionWithModel (app/api/ai/analyze-questions-multi/route.ts:244:24)\
+    at async (app/api/ai/analyze-questions-multi/route.ts:82:30)\
+    at async POST (app/api/ai/analyze-questions-multi/route.ts:132:30)\
+  242 |     \});\
+  243 |\
+> 244 |     const completion = await openai.chat.completions.create(\{\
+      |                        ^\
+  245 |       model: model.id,\
+  246 |       messages: [\
+  247 |         \{ \{\
+  status: 400,\
+  headers: Headers \{\
+    date: 'Sat, 18 Oct 2025 07:51:17 GMT',\
+    'content-type': 'application/json',\
+    'content-length': '245',\
+    connection: 'keep-alive',\
+    'access-control-expose-headers': 'X-Request-ID',\
+    'openai-organization': 'user-c1dujfbx6strkptqzk0qndks',\
+    'openai-processing-ms': '16',\
+    'openai-project': 'proj_9vYkkjL3g18OhxxVcWz7VCba',\
+    'openai-version': '2020-10-01',\
+    'x-envoy-upstream-service-time': '494',\
+    'x-ratelimit-limit-requests': '500',\
+    'x-ratelimit-limit-tokens': '200000',\
+    'x-ratelimit-remaining-requests': '499',\
+    'x-ratelimit-remaining-tokens': '199761',\
+    'x-ratelimit-reset-requests': '120ms',\
+    'x-ratelimit-reset-tokens': '71ms',\
+    'x-request-id': 'req_3ad8d4f2a68c435c8604e20639f6abc1',\
+    'x-openai-proxy-wasm': 'v0.1',\
+    'cf-cache-status': 'DYNAMIC',\
+    'set-cookie': '__cf_bm=WU96MCTQcI4bMhKo59K19f6Vt61g5Lx1AKxI6UH8c6o-1760773877-1.0.1.1-Hukm0id47umLu_rIXXjf1FCS7jef8BU3ScNu7OsqQiCHq5yuJ.2TDFNj6b13OStkqmr.g018TwSF1cBQ.lwPiQ7FFQfyhlHXSLsFt3BpTpw; path=/; expires=Sat, 18-Oct-25 08:21:17 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=tYufCFk44eLOdDCdmZoTKo.mkWCB6asLBcWy5hZuOXk-1760773877888-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None',\
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',\
+    'x-content-type-options': 'nosniff',\
+    server: 'cloudflare',\
+    'cf-ray': '99067319ca711e28-PRG',\
+    'alt-svc': 'h3=":443"; ma=86400'\
+  \},\
+  requestID: 'req_3ad8d4f2a68c435c8604e20639f6abc1',\
+  error: [Object],\
+  code: 'unsupported_parameter',\
+  param: 'max_tokens',\
+  type: 'invalid_request_error'\
+\}\
+\
+\uc0\u55358 \u56598  Processing with model: Claude 3 Haiku (anthropic)\
+  \uc0\u55357 \u56590  Analyzing Qc30edc43... with Claude 3 Haiku\
+  \uc0\u55357 \u56590  Analyzing Qa4856ad8... with Claude 3 Haiku\
+  \uc0\u55357 \u56590  Analyzing Q31eea316... with Claude 3 Haiku\
+  \uc0\u55357 \u56590  Analyzing Q076d36af... with Claude 3 Haiku\
+  \uc0\u55357 \u56590  Analyzing Q311b6eca... with Claude 3 Haiku\
+  \uc0\u55357 \u56590  Analyzing Q0d781149... with Claude 3 Haiku\
+  \uc0\u55357 \u56590  Analyzing Qbc3809ea... with Claude 3 Haiku\
+  \uc0\u55357 \u56590  Analyzing Qf73e0137... with Claude 3 Haiku\
+  \uc0\u55357 \u56590  Analyzing Q2082cfdb... with Claude 3 Haiku\
+  \uc0\u55357 \u56590  Analyzing Qdb2ca36a... with Claude 3 Haiku\
+  \uc0\u55357 \u56590  Analyzing Q5b698405... with Claude 3 Haiku\
+  \uc0\u55357 \u56590  Analyzing Q429ef9e2... with Claude 3 Haiku\
+\
+\uc0\u55357 \u56522  Calculating consensus...\
+\
+\uc0\u9989  Analysis complete: 24 successful, 24 failed\
+ POST /api/ai/analyze-questions-multi 200 in 47630ms\
+ POST /api/admin/reanalyze-exam 200 in 48493ms}

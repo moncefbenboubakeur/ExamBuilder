@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import { requireAdmin } from '@/lib/admin';
+import { AI_MODELS } from '@/lib/ai-models';
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,10 +21,36 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { examId } = body;
+    const { examId, selectedModels } = body;
 
     if (!examId) {
       return NextResponse.json({ error: 'Exam ID is required' }, { status: 400 });
+    }
+
+    // If selectedModels is provided, use them; otherwise use the current global model
+    let modelsToUse: string[] = [];
+
+    if (selectedModels && Array.isArray(selectedModels) && selectedModels.length > 0) {
+      // Validate that all selected models exist
+      modelsToUse = selectedModels.filter(modelId =>
+        AI_MODELS.some(m => m.id === modelId)
+      );
+
+      if (modelsToUse.length === 0) {
+        return NextResponse.json({ error: 'No valid models selected' }, { status: 400 });
+      }
+    } else {
+      // Fallback to current global model
+      const { data: settings } = await supabase
+        .from('ai_settings')
+        .select('model_id')
+        .single();
+
+      if (settings?.model_id) {
+        modelsToUse = [settings.model_id];
+      } else {
+        return NextResponse.json({ error: 'No AI models configured' }, { status: 400 });
+      }
     }
 
     // Get all questions for this exam
@@ -40,8 +67,10 @@ export async function POST(request: NextRequest) {
 
     const questionIds = questions.map(q => q.id);
 
-    // Trigger AI analysis
-    const analysisResponse = await fetch(`${request.nextUrl.origin}/api/ai/analyze-questions`, {
+    console.log(`🎯 Starting multi-model analysis for ${questionIds.length} questions with models:`, modelsToUse);
+
+    // Always use the multi-model endpoint for consistency
+    const analysisResponse = await fetch(`${request.nextUrl.origin}/api/ai/analyze-questions-multi`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -49,7 +78,8 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify({
         questionIds,
-        examId
+        examId,
+        selectedModels: modelsToUse
       })
     });
 
@@ -62,12 +92,36 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
+    // Calculate consensus statistics
+    let consensusStats = {
+      totalQuestions: questionIds.length,
+      modelsUsed: modelsToUse.length,
+      strongConsensus: 0,
+      partialConsensus: 0,
+      noConsensus: 0
+    };
+
+    // If we have consensus data, calculate statistics
+    if (analysisResult.consensusData) {
+      for (const result of analysisResult.consensusData) {
+        if (result.agreementPercentage >= 75) {
+          consensusStats.strongConsensus++;
+        } else if (result.agreementPercentage >= 50) {
+          consensusStats.partialConsensus++;
+        } else {
+          consensusStats.noConsensus++;
+        }
+      }
+    }
+
     return NextResponse.json({
       success: true,
-      message: `Successfully analyzed ${analysisResult.analyzed} questions`,
+      message: `Successfully analyzed ${analysisResult.analyzed} questions with ${modelsToUse.length} model(s)`,
       analyzed: analysisResult.analyzed,
-      failed: analysisResult.failed,
-      errors: analysisResult.errors
+      failed: analysisResult.failed || 0,
+      errors: analysisResult.errors || [],
+      modelsUsed: modelsToUse,
+      consensusStats
     });
 
   } catch (error) {
