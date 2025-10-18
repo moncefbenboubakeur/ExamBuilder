@@ -153,6 +153,8 @@ async function callOpenAI(
     content: prompt
   });
 
+  console.log(`📞 Calling OpenAI model ${modelId} with ${maxTokens} max_completion_tokens`);
+
   const completion = await openai.chat.completions.create({
     model: modelId,
     messages,
@@ -163,6 +165,12 @@ async function callOpenAI(
   const responseText = completion.choices[0]?.message?.content || '';
 
   if (!responseText) {
+    console.error(`❌ Empty response from OpenAI model ${modelId}. Completion object:`, {
+      id: completion.id,
+      model: completion.model,
+      usage: completion.usage,
+      finish_reason: completion.choices[0]?.finish_reason
+    });
     throw new Error('Empty response from OpenAI');
   }
 

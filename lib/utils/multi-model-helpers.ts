@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 
 interface ModelAnalysis {
   model_id: string;
@@ -22,7 +22,6 @@ interface ModelAnalysis {
  * This is used to display the detailed explanations in purple sections
  */
 export async function getBestModelAnalysis(questionId: string): Promise<ModelAnalysis | null> {
-  const supabase = createClient();
 
   const { data, error } = await supabase
     .from('ai_question_analyses')
@@ -82,7 +81,6 @@ export function transformToLegacyFormat(analysis: ModelAnalysis | null) {
  * Used in the consensus display component
  */
 export async function getAllModelAnalyses(questionId: string): Promise<ModelAnalysis[]> {
-  const supabase = createClient();
 
   const { data, error } = await supabase
     .from('ai_question_analyses')

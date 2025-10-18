@@ -41,11 +41,22 @@ export default function QuestionCard({
   const [revealed, setRevealed] = useState(showCorrectAnswer);
   const [showFullAIReasoning, setShowFullAIReasoning] = useState(false);
   const [expandedOptions, setExpandedOptions] = useState<Set<string>>(new Set());
-  const [multiModelAnalysis, setMultiModelAnalysis] = useState<any>(null);
+  interface AIAnalysisData {
+    ai_recommended_answer: string;
+    ai_confidence_score: number;
+    reasoning_summary?: string;
+    reasoning_detailed?: string;
+    option_short_explanations?: Record<string, string>;
+    option_long_explanations?: Record<string, string>;
+    model_used?: string;
+    model_provider?: string;
+  }
+
+  const [multiModelAnalysis, setMultiModelAnalysis] = useState<AIAnalysisData | null>(null);
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
 
   // Try to use multi-model analysis first, fall back to old single-model if not available
-  const [aiAnalysis, setAiAnalysis] = useState<any>(null);
+  const [aiAnalysis, setAiAnalysis] = useState<AIAnalysisData | null>(null);
 
   // Fetch multi-model analysis when question changes or when revealed
   useEffect(() => {
@@ -65,8 +76,10 @@ export default function QuestionCard({
             const oldAnalysis = Array.isArray(question.ai_analysis)
               ? question.ai_analysis[0]
               : question.ai_analysis;
-            setAiAnalysis(oldAnalysis);
-            console.log('📌 Falling back to old single-model analysis');
+            if (oldAnalysis) {
+              setAiAnalysis(oldAnalysis);
+              console.log('📌 Falling back to old single-model analysis');
+            }
           }
         } catch (error) {
           console.error('Error fetching multi-model analysis:', error);
@@ -74,7 +87,9 @@ export default function QuestionCard({
           const oldAnalysis = Array.isArray(question.ai_analysis)
             ? question.ai_analysis[0]
             : question.ai_analysis;
-          setAiAnalysis(oldAnalysis);
+          if (oldAnalysis) {
+            setAiAnalysis(oldAnalysis);
+          }
         } finally {
           setIsLoadingAnalysis(false);
         }
@@ -197,13 +212,24 @@ export default function QuestionCard({
             {/* AI Recommendation */}
             {aiAnalysis && (
               <div className="bg-purple-50 dark:bg-purple-900/20 border-2 border-purple-200 dark:border-purple-800 rounded-xl p-3">
-                <div className="text-xs font-semibold text-purple-700 dark:text-purple-400 mb-1">🤖 AI Analysis</div>
+                <div className="text-xs font-semibold text-purple-700 dark:text-purple-400 mb-1">
+                  🤖 AI Analysis
+                  {multiModelAnalysis && (
+                    <span className="ml-1 text-[10px] opacity-75">({multiModelAnalysis.model_used})</span>
+                  )}
+                </div>
                 <div className="text-2xl font-bold text-purple-900 dark:text-purple-300">
                   {aiAnalysis.ai_recommended_answer}
                 </div>
                 <div className="text-xs text-purple-600 dark:text-purple-400 mt-1">
                   {Math.round(aiAnalysis.ai_confidence_score * 100)}% confidence
                 </div>
+                {isLoadingAnalysis && (
+                  <div className="text-xs text-purple-500 dark:text-purple-400 mt-1 flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 animate-pulse" />
+                    Loading detailed explanations...
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -357,10 +383,18 @@ export default function QuestionCard({
           <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
             {/* Modal Header */}
             <div className="sticky top-0 bg-white dark:bg-gray-800 border-b-2 border-neutral-200 dark:border-gray-700 px-6 py-4 flex justify-between items-center rounded-t-2xl">
-              <h3 className="text-lg font-bold flex items-center gap-2 text-neutral-900 dark:text-white">
-                <Bot className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                AI Full Reasoning
-              </h3>
+              <div>
+                <h3 className="text-lg font-bold flex items-center gap-2 text-neutral-900 dark:text-white">
+                  <Bot className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                  AI Full Reasoning
+                </h3>
+                {multiModelAnalysis && (
+                  <p className="text-xs text-purple-600 dark:text-purple-400 mt-1 flex items-center gap-1">
+                    <Sparkles className="w-3 h-3" />
+                    Analysis by {multiModelAnalysis.model_used} ({multiModelAnalysis.model_provider})
+                  </p>
+                )}
+              </div>
               <button
                 onClick={() => setShowFullAIReasoning(false)}
                 className="text-neutral-500 dark:text-gray-400 hover:text-neutral-700 dark:hover:text-gray-200 transition-colors"

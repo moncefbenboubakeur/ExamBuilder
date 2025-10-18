@@ -88,6 +88,12 @@ export async function POST(request: NextRequest) {
             const analysis = await analyzeQuestionWithModel(question, model);
 
             // Save to ai_question_analyses table
+            console.log(`💾 Saving analysis for question ${question.id} with model:`, {
+              model_id: model.id,
+              model_name: model.name,
+              answer: analysis.recommended_answer
+            });
+
             const analysisRecord: Partial<AIQuestionAnalysis> = {
               question_id: question.id,
               model_provider: model.provider,
@@ -125,7 +131,16 @@ export async function POST(request: NextRequest) {
               return null;
             }
 
-            totalAnalyzed++;
+            // Only count as analyzed if we got a real answer
+            if (analysis.recommended_answer !== 'Unable to determine') {
+              totalAnalyzed++;
+            } else {
+              errors.push({
+                questionId: question.id,
+                modelId: model.id,
+                error: 'Model returned empty or invalid response'
+              });
+            }
             return data;
           } catch (error) {
             console.error(`Failed to analyze Q${question.id} with ${model.name}:`, error);
@@ -250,29 +265,61 @@ async function analyzeQuestionWithModel(
       apiKey: process.env.OPENAI_API_KEY,
     });
 
-    // Handle different parameter names for different OpenAI models
-    const completionParams: any = {
-      model: model.id,
-      messages: [
-        {
-          role: 'system',
-          content: 'You are an expert exam taker. Respond with valid JSON only.'
-        },
-        { role: 'user', content: prompt }
-      ],
-      response_format: { type: 'json_object' },
-    };
+    try {
+      // Handle different parameter names for different OpenAI models
+      interface CompletionParams {
+        model: string;
+        messages: Array<{
+          role: 'system' | 'user';
+          content: string;
+        }>;
+        response_format: { type: 'json_object' };
+        max_completion_tokens?: number;
+      }
 
-    // Use max_completion_tokens for o1 models, max_tokens for others
-    if (model.id.includes('o1-') || model.id.includes('gpt-5')) {
-      completionParams.max_completion_tokens = 1500;
-    } else {
-      completionParams.max_tokens = 1500;
+      const completionParams: CompletionParams = {
+        model: model.id,
+        messages: [
+          {
+            role: 'system',
+            content: 'You are an expert exam taker. Respond with valid JSON only.'
+          },
+          { role: 'user', content: prompt }
+        ],
+        response_format: { type: 'json_object' },
+      };
+
+      // Use max_completion_tokens for all OpenAI models (GPT-5 requires this)
+      // Increase tokens for GPT-5 models due to reasoning overhead
+      if (model.id === 'gpt-5-nano') {
+        completionParams.max_completion_tokens = 3000; // Nano needs more for reasoning
+      } else if (model.id === 'gpt-5-mini') {
+        completionParams.max_completion_tokens = 4000; // Mini needs even more
+      } else if (model.id === 'gpt-5') {
+        completionParams.max_completion_tokens = 5000; // Full GPT-5 needs the most
+      } else {
+        // For other OpenAI models, use max_completion_tokens (newer API standard)
+        completionParams.max_completion_tokens = 2000;
+      }
+
+      const completion = await openai.chat.completions.create(completionParams);
+
+      responseText = completion.choices[0]?.message?.content || '';
+
+      // Debug logging for OpenAI responses
+      if (!responseText || responseText.length < 50) {
+        console.log(`⚠️ Short/empty response from ${model.name}:`, responseText);
+      }
+    } catch (openaiError) {
+      const error = openaiError as { message?: string; status?: number };
+      console.error(`❌ OpenAI API error for ${model.name} (${model.id}):`, error.message);
+      // Check if it's a model not found error
+      if (error.message?.includes('does not exist') || error.status === 404) {
+        console.error(`   → Model ${model.id} does not exist in OpenAI API`);
+        throw new Error(`Model ${model.id} not found in OpenAI API`);
+      }
+      throw openaiError;
     }
-
-    const completion = await openai.chat.completions.create(completionParams);
-
-    responseText = completion.choices[0]?.message?.content || '';
 
   } else if (model.provider === 'google') {
     if (!process.env.GOOGLE_AI_API_KEY) {
@@ -300,23 +347,39 @@ async function analyzeQuestionWithModel(
     jsonText = jsonText.replace(/^```\n/, '').replace(/\n```$/, '');
   }
 
-  // Try to fix incomplete JSON (common with o1-mini)
+  // Try to fix incomplete JSON (common with some models)
   if (!jsonText.endsWith('}')) {
+    console.log(`⚠️ Incomplete JSON from ${model.name}, attempting to fix...`);
     // Try to complete the JSON if it's cut off
     const openBraces = (jsonText.match(/{/g) || []).length;
     const closeBraces = (jsonText.match(/}/g) || []).length;
     const missingBraces = openBraces - closeBraces;
 
     if (missingBraces > 0) {
-      jsonText += '"}' + '}'.repeat(missingBraces - 1);
+      // Add missing quotes if the last line looks incomplete
+      if (!jsonText.endsWith('"')) {
+        jsonText += '"';
+      }
+      // Add missing braces
+      jsonText += '}'.repeat(missingBraces);
     }
   }
 
   let parsed: AIResponse;
   try {
     parsed = JSON.parse(jsonText);
+
+    // Validate the parsed response has required fields
+    if (!parsed.recommended_answer || parsed.recommended_answer === '') {
+      console.warn(`${model.name} returned empty answer, using fallback`);
+      parsed.recommended_answer = 'Unable to determine';
+      parsed.confidence_score = parsed.confidence_score || 0.5;
+    }
   } catch (parseError) {
-    console.warn(`Failed to parse JSON from ${model.name}, attempting recovery...`);
+    console.error(`Failed to parse JSON from ${model.name}:`, parseError);
+    console.error(`Raw response (first 500 chars): ${responseText.substring(0, 500)}`);
+    console.error(`Attempted JSON (first 500 chars): ${jsonText.substring(0, 500)}`);
+
     // Fallback response if JSON parsing fails
     parsed = {
       recommended_answer: 'Unable to determine',

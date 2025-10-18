@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate consensus statistics
-    let consensusStats = {
+    const consensusStats = {
       totalQuestions: questionIds.length,
       modelsUsed: modelsToUse.length,
       strongConsensus: 0,

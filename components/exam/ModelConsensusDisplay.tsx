@@ -248,6 +248,37 @@ export default function ModelConsensusDisplay({
                           {analysis.explanation}
                         </p>
                       )}
+
+                      {analysis.analysis_metadata?.reasoning_summary && (
+                        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+                          <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                            Summary:
+                          </p>
+                          <p className="text-sm text-gray-700 dark:text-gray-300">
+                            {analysis.analysis_metadata.reasoning_summary}
+                          </p>
+                        </div>
+                      )}
+
+                      {analysis.analysis_metadata?.option_explanations && (
+                        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+                          <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">
+                            Option Analysis:
+                          </p>
+                          <div className="space-y-2">
+                            {Object.entries(analysis.analysis_metadata.option_explanations).map(([option, explanation]) => (
+                              <div key={option} className="text-sm">
+                                <span className="font-semibold">{option}:</span>{' '}
+                                <span className="text-gray-700 dark:text-gray-300">
+                                  {typeof explanation === 'object' && explanation !== null
+                                    ? (explanation as { short?: string; detailed?: string }).short || ''
+                                    : String(explanation || '')}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}

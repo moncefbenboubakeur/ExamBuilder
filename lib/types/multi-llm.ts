@@ -13,6 +13,12 @@ export interface AIQuestionAnalysis {
     tokens_used?: number;
     response_time_ms?: number;
     temperature?: number;
+    reasoning_summary?: string;
+    reasoning_detailed?: string;
+    option_explanations?: Record<string, {
+      short?: string;
+      detailed?: string;
+    } | string>;
     [key: string]: unknown;
   };
   created_at: string;

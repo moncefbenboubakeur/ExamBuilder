@@ -167,4 +167,59 @@ Required in `.env.local`:
 ```
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+OPENAI_API_KEY=your_openai_api_key
+ANTHROPIC_API_KEY=your_anthropic_api_key
+GOOGLE_AI_API_KEY=your_google_ai_api_key
+```
+
+## Multi-Model AI Analysis System
+
+### AI Model Configuration
+
+The AI models are configured in `lib/ai-models.ts`.
+
+**IMPORTANT - Official Sources of Truth for Model Names and Pricing**:
+- **OpenAI Models**: https://platform.openai.com/docs/pricing
+- **Google Gemini Models**: https://ai.google.dev/gemini-api/docs/pricing
+- **Anthropic Claude Models**: https://docs.claude.com/en/docs/about-claude/pricing
+
+Always verify model IDs and pricing against these official sources when adding or updating models.
+
+Current model providers supported:
+- **OpenAI**: GPT-5 family (gpt-5, gpt-5-mini, gpt-5-nano), GPT-4.1 family (gpt-4.1, gpt-4.1-mini, gpt-4.1-nano), GPT-4o family, GPT-4 Turbo, GPT-3.5 Turbo, o1 models
+- **Anthropic**: Claude 3 family (Haiku, Sonnet, Opus), Claude 3.5 family
+- **Google**: Gemini 1.5 Pro, Gemini 1.5 Flash
+
+### Multi-Model Analysis Features
+
+1. **Analyze questions with multiple AI models simultaneously**
+   - Each model provides independent analysis
+   - Consensus tracking across models
+   - Detailed explanations for each answer option
+
+2. **Database Tables for AI Analysis**:
+   - `ai_question_analyses`: Stores individual model analyses
+     - One row per model per question
+     - Includes detailed explanations in `analysis_metadata` JSONB field
+   - `ai_consensus_results`: Tracks consensus between models
+     - Calculates agreement percentage
+     - Identifies dissenting models
+
+3. **Key API Endpoints**:
+   - `/api/ai/analyze-questions-multi`: Analyzes questions with selected models
+   - `/api/admin/reanalyze-exam`: Re-analyzes entire exam with multiple models
+
+4. **Analysis Metadata Structure**:
+```json
+{
+  "reasoning_summary": "Brief summary",
+  "reasoning_detailed": "Detailed explanation",
+  "option_explanations": {
+    "A": {
+      "short": "Brief explanation",
+      "detailed": "Comprehensive analysis"
+    },
+    // ... for all options
+  }
+}
 ```
