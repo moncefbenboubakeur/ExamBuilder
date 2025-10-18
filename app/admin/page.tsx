@@ -8,6 +8,7 @@ import { Shield, Bot, Check, DollarSign, Zap, AlertCircle, RefreshCw, Sparkles, 
 import { cn } from '@/lib/utils';
 import TestModelModal from '@/components/TestModelModal';
 import TestAllModelsModal from '@/components/TestAllModelsModal';
+import ModelSelectionModal from '@/components/admin/ModelSelectionModal';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,6 +48,8 @@ export default function AdminPage() {
   const [deleteExamModalOpen, setDeleteExamModalOpen] = useState(false);
   const [deleteExamForAll, setDeleteExamForAll] = useState(false);
   const [examToDelete, setExamToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [modelSelectionOpen, setModelSelectionOpen] = useState(false);
+  const [examToAnalyze, setExamToAnalyze] = useState<{ id: string; name: string; question_count: number } | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -104,9 +107,18 @@ export default function AdminPage() {
     }
   }
 
-  async function handleReanalyzeExam(examId: string) {
-    console.log('🔍 Starting re-analysis for exam:', examId);
-    setReanalyzing(examId);
+  function handleOpenModelSelection(exam: { id: string; name: string; question_count: number }) {
+    setExamToAnalyze(exam);
+    setModelSelectionOpen(true);
+  }
+
+  async function handleMultiModelAnalysis(selectedModels: string[]) {
+    if (!examToAnalyze) return;
+
+    console.log('🔍 Starting multi-model analysis for exam:', examToAnalyze.id);
+    console.log('📊 Selected models:', selectedModels);
+    setReanalyzing(examToAnalyze.id);
+    setModelSelectionOpen(false);
     setMessage(null);
 
     try {
@@ -114,7 +126,10 @@ export default function AdminPage() {
       const response = await fetch('/api/admin/reanalyze-exam', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ examId }),
+        body: JSON.stringify({
+          examId: examToAnalyze.id,
+          selectedModels
+        }),
       });
 
       console.log('📨 Response status:', response.status);
@@ -124,16 +139,17 @@ export default function AdminPage() {
       if (data.success) {
         setMessage({
           type: 'success',
-          text: `${data.message}. Analyzed: ${data.analyzed}, Failed: ${data.failed}`
+          text: `Analysis complete! Used ${selectedModels.length} models. Analyzed: ${data.analyzed} questions`
         });
       } else {
         setMessage({ type: 'error', text: data.error || 'Failed to analyze exam' });
       }
     } catch (error) {
-      console.error('❌ Reanalyze error:', error);
+      console.error('❌ Multi-model analysis error:', error);
       setMessage({ type: 'error', text: `Failed: ${error instanceof Error ? error.message : String(error)}` });
     } finally {
       setReanalyzing(null);
+      setExamToAnalyze(null);
     }
   }
 
@@ -475,7 +491,7 @@ export default function AdminPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => handleReanalyzeExam(exam.id)}
+                      onClick={() => handleOpenModelSelection(exam)}
                       disabled={reanalyzing === exam.id}
                       className={cn(
                         "px-6 py-3 rounded-xl font-medium transition-all duration-200 flex items-center gap-2",
@@ -610,6 +626,19 @@ export default function AdminPage() {
         />
       )}
 
+      {/* Model Selection Modal for Analysis */}
+      {modelSelectionOpen && examToAnalyze && (
+        <ModelSelectionModal
+          examName={examToAnalyze.name}
+          questionCount={examToAnalyze.question_count}
+          onClose={() => {
+            setModelSelectionOpen(false);
+            setExamToAnalyze(null);
+          }}
+          onAnalyze={handleMultiModelAnalysis}
+        />
+      )}
+
       {/* Delete Exam Confirmation Modal */}
       {deleteExamModalOpen && examToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
@@ -623,7 +652,7 @@ export default function AdminPage() {
                 Are you sure you want to delete the exam:
               </p>
               <p className="font-semibold text-lg dark:text-white">
-                "{examToDelete.name}"
+                &ldquo;{examToDelete.name}&rdquo;
               </p>
 
               {deleteExamForAll ? (
@@ -695,7 +724,7 @@ export default function AdminPage() {
                 Are you sure you want to delete the course for:
               </p>
               <p className="font-semibold text-lg dark:text-white">
-                "{examToDeleteCourse.name}"
+                &ldquo;{examToDeleteCourse.name}&rdquo;
               </p>
 
               {deleteForAll ? (
@@ -707,7 +736,7 @@ export default function AdminPage() {
               ) : (
                 <div className="p-3 bg-orange-50 dark:bg-orange-900/30 border-2 border-orange-200 dark:border-orange-700 rounded-lg">
                   <p className="text-orange-800 dark:text-orange-300 text-sm">
-                    This will delete the course only for this specific exam (admin only). Other users' courses will not be affected.
+                    This will delete the course only for this specific exam (admin only). Other users&apos; courses will not be affected.
                   </p>
                 </div>
               )}

@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     }
 
     let deletedCount = 0;
-    let affectedExams = [];
+    const affectedExams = [];
 
     if (deleteForAll && exam.name) {
       // Delete all exams with the same name and question count for all users
